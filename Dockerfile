@@ -1,6 +1,6 @@
 FROM ubuntu:24.04
 
+COPY ./src/ /app/src/
 WORKDIR /app
-COPY .src/ /app/src/
 
 RUN python3 -m pip install /app/src/requirements.txt
