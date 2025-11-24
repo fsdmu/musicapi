@@ -1,6 +1,6 @@
-FROM ubuntu:24.04
+FROM python:3.12
 
 COPY ./src/ /app/src/
 WORKDIR /app
 
-RUN python -m pip install /app/src/requirements.txt
+RUN python -m pip install -r /app/src/requirements.txt
