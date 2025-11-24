@@ -1,4 +1,4 @@
-FROM python:3.12.12:latest
+FROM ubuntu:24.04
 
 WORKDIR /app
 COPY .src/ /app/src/
