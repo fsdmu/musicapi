@@ -13,14 +13,19 @@ class Base(DeclarativeBase):
 class Artist(Base):
     __tablename__ = "artist"
     id = sa.Column(sa.Integer, primary_key=True)
-    url = sa.Column(sa.String)
+    url = sa.Column(sa.String, unique=True)
+    auto_download = sa.Column(sa.Boolean, default=False)
 
 
 class Albums(Base):
     __tablename__ = "albums"
     id = sa.Column(sa.Integer, primary_key=True)
-    url = sa.Column(sa.String)
-    artistId = sa.Column(sa.Integer, sa.ForeignKey(Artist.id))
+    url = sa.Column(sa.String, unique=True)
+
+class Songs(Base):
+    __tablename__ = "songs"
+    id = sa.Column(sa.Integer, primary_key=True)
+    url = sa.Column(sa.String, unique=True)
 
 
 class DatabaseConnector:
@@ -36,15 +41,6 @@ class DatabaseConnector:
             result = conn.execute(stmt)
             return result.fetchone()[0]
 
-    def get_albums(self, artist_id: int) -> List[str]:
-        album_urls = []
-        stmt = select(Albums).where(Albums.artistId == artist_id)
-        with self.engine.connect() as conn:
-            result = conn.execute(stmt)
-            for album in result.fetchall():
-                album_urls.append(album.url)
-        return album_urls
-
     def add_artist(self, artist_url: str) -> Row[Any]:
         stmt = insert(Artist).values(url=artist_url)
         with self.engine.connect() as conn:
@@ -52,12 +48,40 @@ class DatabaseConnector:
             conn.commit()
             return res
 
-    def add_album(self, album_url: str, artist_id: int) -> Row[Any]:
-        stmt = insert(Albums).values(url=album_url, artistId=artist_id)
+    def add_album(self, album_url: str) -> Row[Any]:
+        stmt = insert(Albums).values(url=album_url)
         with self.engine.connect() as conn:
             res = conn.execute(stmt).inserted_primary_key
             conn.commit()
             return res
+
+    def add_song(self, song_url: str) -> Row[Any]:
+        stmt = insert(Songs).values(url=song_url)
+        with self.engine.connect() as conn:
+            res = conn.execute(stmt).inserted_primary_key
+            conn.commit()
+            return res
+
+    def add_auto_download_artist(self, artist_url: str) -> Row[Any]:
+        existing_artist_id = self.get_artist_id(artist_url)
+        if existing_artist_id is not None:
+            stmt = sa.update(Artist).where(
+                Artist.id == existing_artist_id).values(auto_download=True)
+        else:
+            stmt = insert(Artist).values(url=artist_url, auto_download=True)
+        with self.engine.connect() as conn:
+            res = conn.execute(stmt).inserted_primary_key
+            conn.commit()
+            return res
+
+    def get_auto_download_artists(self) -> List[str]:
+        artist_urls = []
+        stmt = select(Artist).where(Artist.auto_download == True)
+        with self.engine.connect() as conn:
+            result = conn.execute(stmt)
+            for artist in result.fetchall():
+                artist_urls.append(artist.url)
+        return artist_urls
 
     @staticmethod
     def _get_engine() -> Engine:

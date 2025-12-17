@@ -44,3 +44,22 @@ class YoutubeAlbumFetcher:
     @staticmethod
     def _get_artist_details(artist_id: str) -> Dict[str, Any]:
         return ytmusic.get_artist(artist_id)
+
+    @staticmethod
+    def get_album_songs(playlist_id: str) -> List[str]:
+        playlist = ytmusic.get_playlist(playlist_id, limit=None)
+        tracks = playlist.get("tracks", [])
+
+        songs = []
+        for track in tracks:
+            video_id = track.get("videoId")
+            if video_id:
+                song_url = f"https://music.youtube.com/watch?v={video_id}&list={playlist_id}"
+                songs.append(song_url)
+        return songs
+
+
+yt = YoutubeAlbumFetcher()
+
+s = yt.get_album_songs("OLAK5uy_lUjc259ZJ9p06XcfWqaALVNpD1p4BI-Ig")
+print()
