@@ -9,5 +9,5 @@ RUN mkdir -p /app/logs
 
 EXPOSE 8080
 
-RUN python -m pip install -r /app/requirements.txt
+RUN python -m pip install -r /app/src/requirements.txt
 CMD ["python", "/app/src/webui.py"]
