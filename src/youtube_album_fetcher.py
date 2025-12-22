@@ -137,7 +137,7 @@ class YoutubeAlbumFetcher:
         eps = []
 
         for item in releases:
-            playlist_id = item.get("browseId")  # Or audioPlaylistId
+            playlist_id = item.get("browseId")
             album_details = ytmusic.get_album(playlist_id)
 
             track_count = len(album_details.get("tracks", []))
