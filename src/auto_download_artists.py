@@ -1,3 +1,4 @@
+"""Automatically download albums from artists marked for auto-download."""
 import logging
 import src.logging_config  # initialize logging
 
@@ -9,6 +10,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 def main():
+    """Automatically download albums from artists marked for auto-download."""
     db = DatabaseConnector()
     mt = MeTubeConnector(base_url=None)
 

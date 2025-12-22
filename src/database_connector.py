@@ -1,3 +1,4 @@
+"""Database connector for managing artists, albums, and songs in the database."""
 import os
 from typing import List, Optional, Any
 
@@ -9,10 +10,12 @@ from src.youtube_album_fetcher import YoutubeAlbumFetcher
 
 
 class Base(DeclarativeBase):
+    """Base class for declarative models."""
     pass
 
 
 class Artist(Base):
+    """SQLAlchemy model for the 'artist' table."""
     __tablename__ = "artist"
     id = sa.Column(sa.Integer, primary_key=True)
     url = sa.Column(sa.String, unique=True)
@@ -20,30 +23,53 @@ class Artist(Base):
 
 
 class Albums(Base):
+    """SQLAlchemy model for the 'albums' table."""
     __tablename__ = "albums"
     id = sa.Column(sa.Integer, primary_key=True)
     url = sa.Column(sa.String, unique=True)
 
 class Songs(Base):
+    """SQLAlchemy model for the 'songs' table."""
     __tablename__ = "songs"
     id = sa.Column(sa.Integer, primary_key=True)
     url = sa.Column(sa.String, unique=True)
 
 
 class DatabaseConnector:
-    def __init__(self):
+    """Database connector for managing artists, albums, and songs."""
+
+    def __init__(self) -> None:
+        """Initialize the DatabaseConnector and set up the database engine."""
         self.artist_table = "artist"
         self.albums_table = "albums"
 
         self.engine = self._get_engine()
 
     def get_artist_id(self, artist_url: str) -> Optional[int]:
+        """Get the artist ID for a given artist URL.
+
+        Args:
+            artist_url: The URL of the artist.
+
+        Returns:
+            The artist ID if found, otherwise None.
+
+        """
         stmt = select(Artist.id).where(Artist.url == artist_url)
         with self.engine.connect() as conn:
             result = conn.execute(stmt).fetchone()
             return result[0] if result else None
 
     def add_artist(self, artist_url: str) -> Row[Any]:
+        """Add an artist to the database if not already present.
+
+        Args:
+            artist_url: The URL of the artist.
+
+        Returns:
+            The artist ID.
+
+        """
         artist = self.get_artist(artist_url)
         if artist is not None:
             return artist
@@ -54,6 +80,15 @@ class DatabaseConnector:
             return res
 
     def add_album(self, album_url: str) -> Row[Any]:
+        """Add an album to the database if not already present.
+
+        Args:
+            album_url: The URL of the album.
+
+        Returns:
+            The album ID.
+
+        """
         album = self.get_album(album_url)
         if album is not None:
             return album
@@ -64,6 +99,15 @@ class DatabaseConnector:
             return res
 
     def add_song(self, song_url: str) -> Row[Any]:
+        """Add a song to the database if not already present.
+
+        Args:
+            song_url: The URL of the song.
+
+        Returns:
+            The song ID.
+
+        """
         song = self.get_song(song_url)
         if song is not None:
             return song
@@ -74,6 +118,15 @@ class DatabaseConnector:
             return res
 
     def add_auto_download_artist(self, artist_url: str) -> Optional[int]:
+        """Mark an artist for auto-download in the database.
+
+        Args:
+            artist_url: The URL of the artist.
+
+        Returns:
+            The artist ID.
+
+        """
         existing_artist_id = self.get_artist_id(artist_url)
         with self.engine.connect() as conn:
             if existing_artist_id is not None:
@@ -95,6 +148,12 @@ class DatabaseConnector:
                 return result.inserted_primary_key[0]
 
     def get_auto_download_artists(self) -> List[str]:
+        """Retrieve a list of artist URLs marked for auto-download.
+
+        Returns:
+            A list of artist URLs.
+
+        """
         artist_urls = []
         stmt = select(Artist).where(Artist.auto_download == True)
         with self.engine.connect() as conn:
@@ -104,6 +163,15 @@ class DatabaseConnector:
         return artist_urls
 
     def get_song(self, song_url) -> Optional[Row[Any]]:
+        """Get the song ID for a given song URL.
+
+        Args:
+            song_url: The URL of the song.
+
+        Returns:
+            The song ID if found, otherwise None.
+
+        """
         stmt = select(Songs.id).where(Songs.url == song_url)
         with self.engine.connect() as conn:
             result = conn.execute(stmt).fetchone()
@@ -123,12 +191,30 @@ class DatabaseConnector:
             return result[0] if result else None
 
     def get_album(self, album_url) -> Row[Any]:
+        """Get the album ID for a given album URL.
+
+        Args:
+            album_url: The URL of the album.
+
+        Returns:
+            The album ID if found, otherwise None.
+
+        """
         stmt = select(Albums.id).where(Albums.url == album_url)
         with self.engine.connect() as conn:
             result = conn.execute(stmt).fetchone()
             return result[0] if result else None
 
     def get_artist(self, artist_url) -> Row[Any]:
+        """Get the artist ID for a given artist URL.
+
+        Args:
+            artist_url: The URL of the artist.
+
+        Returns:
+            The artist ID if found, otherwise None.
+
+        """
         stmt = select(Artist.id).where(Artist.url == artist_url)
         with self.engine.connect() as conn:
             result = conn.execute(stmt).fetchone()
@@ -136,6 +222,12 @@ class DatabaseConnector:
 
     @staticmethod
     def _get_engine() -> Engine:
+        """Create and return a SQLAlchemy engine using environment variables.
+
+        Returns:
+            A SQLAlchemy Engine instance.
+
+        """
         user = os.environ['DB_USER']
         password = os.environ['DB_PASSWORD']
         url = os.environ['DB_URL']

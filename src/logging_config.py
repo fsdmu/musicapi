@@ -1,3 +1,4 @@
+"""Logging configuration for the music API project."""
 import logging
 import os
 from logging.handlers import RotatingFileHandler

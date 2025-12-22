@@ -1,11 +1,10 @@
+"""Web UI for adding YouTube albums and artists to MeTube."""
 import logging
 
-# initialize logging early for the web UI entrypoint
 import src.logging_config  # initialize logging
 
 from nicegui import ui
 
-# switch to package imports so running `python src/webui.py` works
 from src.me_tube_connector import MeTubeConnector
 from src.youtube_album_fetcher import YoutubeAlbumFetcher
 
