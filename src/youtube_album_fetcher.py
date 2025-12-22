@@ -57,9 +57,3 @@ class YoutubeAlbumFetcher:
                 song_url = f"https://music.youtube.com/watch?v={video_id}&list={playlist_id}"
                 songs.append(song_url)
         return songs
-
-
-yt = YoutubeAlbumFetcher()
-
-s = yt.get_album_songs("OLAK5uy_lUjc259ZJ9p06XcfWqaALVNpD1p4BI-Ig")
-print()

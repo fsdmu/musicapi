@@ -6,6 +6,8 @@ import requests
 
 import logging
 
+import src.logging_config  # initialize logging
+
 from src.database_connector import DatabaseConnector
 from src.youtube_album_fetcher import YoutubeAlbumFetcher
 
@@ -26,6 +28,17 @@ class MeTubeConnector:
             url = [url]
         responses = []
         for url in url:
+            if "playlist" in url:
+                result = self.db_connector.get_album(url)
+                if result is not None:
+                    logger.info(f"Album {url} already in database, skipping.")
+                    continue
+            elif "watch" in url:
+                result = self.db_connector.get_song(url)
+                if result is not None:
+                    logger.info(f"Song {url} already in database, skipping.")
+                    continue
+
             if not add_without_download:
                 data = {"url": url, "quality": quality, "format": format}
                 req = requests.post(

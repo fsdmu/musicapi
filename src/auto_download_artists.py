@@ -1,4 +1,5 @@
 import logging
+import src.logging_config  # initialize logging
 
 from src.me_tube_connector import MeTubeConnector
 from src.database_connector import DatabaseConnector

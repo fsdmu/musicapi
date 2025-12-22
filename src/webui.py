@@ -1,9 +1,13 @@
 import logging
 
+# initialize logging early for the web UI entrypoint
+import src.logging_config  # initialize logging
+
 from nicegui import ui
 
-from me_tube_connector import MeTubeConnector
-from youtube_album_fetcher import YoutubeAlbumFetcher
+# switch to package imports so running `python src/webui.py` works
+from src.me_tube_connector import MeTubeConnector
+from src.youtube_album_fetcher import YoutubeAlbumFetcher
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -16,7 +20,7 @@ ui.label('Enter YouTube URL here:')
 url_input = ui.input(placeholder='YouTube URL')
 
 auto_download_toggle = ui.switch("Auto Download artists' future albums", value=False)
-add_without_download = ui.switch("Add artist without auto download", value=False)
+add_without_download = ui.switch("Add artist without download", value=False)
 
 
 def on_submit():
@@ -26,16 +30,22 @@ def on_submit():
         if not url:
             ui.notify('Please enter a YouTube URL', color='negative')
             return
-        if not "music.youtube.com" in url:
+        if not "youtube.com" in url:
             ui.notify('Please enter a valid YouTube Music URL', color='negative')
             return
         if "channel" in url:
             urls = YoutubeAlbumFetcher.get_album_ids(url)
-            database_artist_id = db_connector.get_artist_id(url)
-            if database_artist_id is None:
-                db_connector.add_artist(url)
+            db_connector.add_artist(url)
             if auto_download_toggle.value:
                 db_connector.add_auto_download_artist(url)
+            for album_url in urls:
+                database_album_id = db_connector.add_album(album_url)
+                logger.info(f'Added album {album_url} with ID {database_album_id} for artist {url}')
+
+                songs = YoutubeAlbumFetcher.get_album_songs(album_url.split("list=")[1])
+                for song_url in songs:
+                    database_song_id = db_connector.add_song(song_url)
+                    logger.info(f'Added song {song_url} with ID {database_song_id} for album {album_url}')
 
         elif not "playlist" in url and not "watch" in url:
             ui.notify('Please enter a valid YouTube video, playlist, or channel URL', color='negative')
