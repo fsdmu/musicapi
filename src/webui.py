@@ -58,4 +58,5 @@ def on_submit():
 
 ui.button('Submit', on_click=on_submit)
 
-ui.run()
+ui.run(host='0.0.0.0', port=8080)
+
