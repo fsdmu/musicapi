@@ -23,6 +23,7 @@ add_without_download = ui.switch("Add artist without download", value=False)
 
 
 def on_submit():
+    """Handle the submission of a YouTube URL."""
     try:
         url = str(url_input.value).strip()
         urls = None
