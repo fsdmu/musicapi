@@ -52,6 +52,8 @@ def on_submit():
         if not add_without_download.value:
             mt_connector.queue_download(urls or url, add_without_download=add_without_download.value)
 
+        url_input.value = ''
+
     except Exception as e:
         ui.notify(f'Error: {e}', color='negative')
         return
