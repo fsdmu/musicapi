@@ -23,6 +23,7 @@ add_without_download = ui.switch("Add artist without download", value=False)
 
 
 def on_submit():
+    """Handle the submission of a YouTube URL."""
     try:
         url = str(url_input.value).strip()
         urls = None
@@ -51,6 +52,8 @@ def on_submit():
             return
         if not add_without_download.value:
             mt_connector.queue_download(urls or url, add_without_download=add_without_download.value)
+
+        url_input.value = ''
 
     except Exception as e:
         ui.notify(f'Error: {e}', color='negative')
