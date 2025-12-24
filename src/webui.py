@@ -16,8 +16,9 @@ logger.setLevel(logging.INFO)
 mt_connector = MeTubeConnector(base_url=None)
 db_connector = mt_connector.db_connector
 
-ui.button(icon="code", on_click=lambda: right_drawer.toggle()).classes(
-    "absolute top-2 right-2")
+ui.button(icon="code", on_click=lambda: right_drawer.toggle()).classes(  # type: ignore
+    "absolute top-2 right-2"
+)
 
 ui.label("Enter YouTube URL here:")
 url_input = ui.input(placeholder="YouTube URL")
@@ -52,7 +53,6 @@ def _handle_channel_url(channel_url: str) -> None:
             )
 
 
-
 async def on_submit():
     """Handle the submission of a YouTube URL."""
     try:
@@ -62,19 +62,20 @@ async def on_submit():
             ui.notify("Please enter a YouTube URL", color="negative")
             return
         if "youtube.com" not in url:
-            ui.notify("Please enter a valid YouTube Music URL",
-                      color="negative")
+            ui.notify("Please enter a valid YouTube Music URL", color="negative")
             return
         if "music.youtube.com" not in url:
             with ui.dialog() as dialog, ui.card():
-                ui.label('Using youtube.com links instead of music.youtube.com links'
-                         'is discouraged.\nDo you want to continue?')
+                ui.label(
+                    "Using youtube.com links instead of music.youtube.com links"
+                    "is discouraged.\nDo you want to continue?"
+                )
                 with ui.row():
-                    ui.button('Yes', on_click=lambda: dialog.submit('Yes'))
-                    ui.button('No', on_click=lambda: dialog.submit('No'))
+                    ui.button("Yes", on_click=lambda: dialog.submit("Yes"))
+                    ui.button("No", on_click=lambda: dialog.submit("No"))
 
             result = await dialog
-            if result != 'Yes':
+            if result != "Yes":
                 return
 
         if "channel" in url:
@@ -87,8 +88,9 @@ async def on_submit():
             return
         if not add_without_download.value:
             mt_connector.queue_download(
-                urls or url, add_without_download=add_without_download.value,
-                format=audio_format.value
+                urls or url,
+                add_without_download=add_without_download.value,
+                format=audio_format.value,
             )
 
         url_input.value = ""
@@ -101,14 +103,14 @@ async def on_submit():
 ui.button("Submit", on_click=on_submit)
 
 with ui.right_drawer(top_corner=True, value=False).style(
-        'background-color: #ececec') as right_drawer:
-    add_without_download = ui.switch("Add artist to download future albums without "
-                                    "queuing downloads now.",
-                                     value=False)
+    "background-color: #ececec"
+) as right_drawer:
+    add_without_download = ui.switch(
+        "Add artist to download future albums without queuing downloads now.",
+        value=False,
+    )
     audio_format = ui.select(
-        ["mp3", "wav", "flac", "m4a"],
-        label="Select download format",
-        value="mp3"
+        ["mp3", "wav", "flac", "m4a"], label="Select download format", value="mp3"
     )
 
 

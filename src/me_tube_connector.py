@@ -57,13 +57,13 @@ class MeTubeConnector:
         responses = []
         for url in url:
             if "playlist" in url:
-                result = self.db_connector.get_album(url)
-                if result is not None:
+                album_result = self.db_connector.get_album(url)
+                if album_result is not None:
                     logger.info(f"Album {url} already in database, skipping.")
                     continue
             elif "watch" in url:
-                result = self.db_connector.get_song(url)
-                if result is not None:
+                song_result = self.db_connector.get_song(url)
+                if song_result is not None:
                     logger.info(f"Song {url} already in database, skipping.")
                     continue
 
