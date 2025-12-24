@@ -66,12 +66,16 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
             logger.error(error)
             raise ValueError(error)
 
-    def _handle_channel_url(self, channel_url: str, auto_download: bool) -> None:
+    def _handle_channel_url(
+        self, channel_url: str, auto_download: bool, add_without_download: bool = False
+    ) -> None:
         """Handle adding a YouTube channel URL to the database.
 
         Args:
             channel_url: The YouTube channel URL.
             auto_download: Whether to mark the artist for auto-download.
+            add_without_download: If True, will add albums to the database
+                without queuing downloads. Default is False.
 
         """
         album_urls = YoutubeAlbumFetcher.get_album_ids(channel_url)
@@ -84,7 +88,7 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
                     album_url,
                     quality="Best",
                     download_format="mp3",
-                    add_without_download=True,
+                    add_without_download=add_without_download,
                 )
 
             except Exception as e:
