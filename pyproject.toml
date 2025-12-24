@@ -1,0 +1,13 @@
+[project]
+name = "musicapi"
+version = "0.0.3"
+description = "Web interface for automatic music donwload and tracking."
+authors = [
+    { name="fsdmu"}
+]
+maintainers = [
+    { name="fsdmu"}
+]
+readme = "README.md"
+license = { text = "GPL-3.0-or-later" }
+requires-python = ">=3.11"

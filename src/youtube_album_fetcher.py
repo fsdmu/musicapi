@@ -1,4 +1,5 @@
 """Module to fetch album and song information from YouTube Music."""
+
 from typing import Dict, Any, List
 
 from ytmusicapi import YTMusic
@@ -117,7 +118,10 @@ class YoutubeAlbumFetcher:
         for track in tracks:
             video_id = track.get("videoId")
             if video_id:
-                song_url = f"https://music.youtube.com/watch?v={video_id}&list={playlist_id}"
+                song_url = (
+                    f"https://music.youtube.com/watch?v={video_id}"
+                    f"&list={playlist_id}"
+                )
                 songs.append(song_url)
         return songs
 
@@ -144,6 +148,6 @@ class YoutubeAlbumFetcher:
 
             if track_count <= 1:
                 continue
-            eps.append(album_details.get('audioPlaylistId'))
+            eps.append(album_details.get("audioPlaylistId"))
 
         return eps

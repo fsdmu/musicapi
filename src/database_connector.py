@@ -1,4 +1,5 @@
-"""Database connector for managing artists, albums, and songs in the database."""
+"""Database connector for managing the database."""
+
 import os
 from typing import List, Optional, Any
 
@@ -6,16 +7,16 @@ import sqlalchemy as sa
 from sqlalchemy import insert, Engine, select, Row
 from sqlalchemy.orm import DeclarativeBase
 
-from src.youtube_album_fetcher import YoutubeAlbumFetcher
-
 
 class Base(DeclarativeBase):
     """Base class for declarative models."""
+
     pass
 
 
 class Artist(Base):
     """SQLAlchemy model for the 'artist' table."""
+
     __tablename__ = "artist"
     id = sa.Column(sa.Integer, primary_key=True)
     url = sa.Column(sa.String, unique=True)
@@ -24,12 +25,15 @@ class Artist(Base):
 
 class Albums(Base):
     """SQLAlchemy model for the 'albums' table."""
+
     __tablename__ = "albums"
     id = sa.Column(sa.Integer, primary_key=True)
     url = sa.Column(sa.String, unique=True)
 
+
 class Songs(Base):
     """SQLAlchemy model for the 'songs' table."""
+
     __tablename__ = "songs"
     id = sa.Column(sa.Integer, primary_key=True)
     url = sa.Column(sa.String, unique=True)
@@ -139,10 +143,7 @@ class DatabaseConnector:
                 conn.commit()
                 return existing_artist_id
             else:
-                stmt = insert(Artist).values(
-                    url=artist_url,
-                    auto_download=True
-                )
+                stmt = insert(Artist).values(url=artist_url, auto_download=True)
                 result = conn.execute(stmt)
                 conn.commit()
                 return result.inserted_primary_key[0]
@@ -155,7 +156,7 @@ class DatabaseConnector:
 
         """
         artist_urls = []
-        stmt = select(Artist).where(Artist.auto_download == True)
+        stmt = select(Artist).where(Artist.auto_download == True)  # noqa: E712
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
             for artist in result.fetchall():
@@ -228,10 +229,11 @@ class DatabaseConnector:
             A SQLAlchemy Engine instance.
 
         """
-        user = os.environ['DB_USER']
-        password = os.environ['DB_PASSWORD']
-        url = os.environ['DB_URL']
-        port = os.environ['DB_PORT']
-        database = os.environ['DB_DATABASE']
+        user = os.environ["DB_USER"]
+        password = os.environ["DB_PASSWORD"]
+        url = os.environ["DB_URL"]
+        port = os.environ["DB_PORT"]
+        database = os.environ["DB_DATABASE"]
         return sa.create_engine(
-            f"mysql+mysqlconnector://{user}:{password}@{url}:{port}/{database}")
+            f"mysql+mysqlconnector://{user}:{password}@{url}:{port}/{database}"
+        )

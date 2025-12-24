@@ -1,6 +1,7 @@
 """Automatically download albums from artists marked for auto-download."""
+
 import logging
-import src.logging_config  # initialize logging
+import src.logging_config  # initialize logging  # noqa: F401
 
 from src.me_tube_connector import MeTubeConnector
 from src.database_connector import DatabaseConnector
@@ -8,6 +9,7 @@ from src.youtube_album_fetcher import YoutubeAlbumFetcher
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
 
 def main():
     """Automatically download albums from artists marked for auto-download."""
@@ -21,6 +23,7 @@ def main():
             mt.queue_download(album_urls)
         except Exception as e:
             logger.error(f"Error processing artist {artist_url}: {e}")
+
 
 if __name__ == "__main__":
     main()

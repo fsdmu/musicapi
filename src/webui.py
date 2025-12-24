@@ -1,7 +1,8 @@
 """Web UI for adding YouTube albums and artists to MeTube."""
+
 import logging
 
-import src.logging_config  # initialize logging
+import src.logging_config  # noqa: F401
 
 from nicegui import ui
 
@@ -15,8 +16,8 @@ logger.setLevel(logging.INFO)
 mt_connector = MeTubeConnector(base_url=None)
 db_connector = mt_connector.db_connector
 
-ui.label('Enter YouTube URL here:')
-url_input = ui.input(placeholder='YouTube URL')
+ui.label("Enter YouTube URL here:")
+url_input = ui.input(placeholder="YouTube URL")
 
 auto_download_toggle = ui.switch("Auto Download artists' future albums", value=False)
 add_without_download = ui.switch("Add artist without download", value=False)
@@ -28,10 +29,10 @@ def on_submit():
         url = str(url_input.value).strip()
         urls = None
         if not url:
-            ui.notify('Please enter a YouTube URL', color='negative')
+            ui.notify("Please enter a YouTube URL", color="negative")
             return
-        if not "youtube.com" in url:
-            ui.notify('Please enter a valid YouTube Music URL', color='negative')
+        if "youtube.com" not in url:
+            ui.notify("Please enter a valid YouTube Music URL", color="negative")
             return
         if "channel" in url:
             urls = YoutubeAlbumFetcher.get_album_ids(url)
@@ -40,26 +41,37 @@ def on_submit():
                 db_connector.add_auto_download_artist(url)
             for album_url in urls:
                 database_album_id = db_connector.add_album(album_url)
-                logger.info(f'Added album {album_url} with ID {database_album_id} for artist {url}')
+                logger.info(
+                    f"Added album {album_url} with ID {database_album_id} "
+                    f"for artist {url}"
+                )
 
                 songs = YoutubeAlbumFetcher.get_album_songs(album_url.split("list=")[1])
                 for song_url in songs:
                     database_song_id = db_connector.add_song(song_url)
-                    logger.info(f'Added song {song_url} with ID {database_song_id} for album {album_url}')
+                    logger.info(
+                        f"Added song {song_url} with ID {database_song_id} "
+                        f"for album {album_url}"
+                    )
 
-        elif not "playlist" in url and not "watch" in url:
-            ui.notify('Please enter a valid YouTube video, playlist, or channel URL', color='negative')
+        elif "playlist" not in url and "watch" not in url:
+            ui.notify(
+                "Please enter a valid YouTube video, playlist, or channel URL",
+                color="negative",
+            )
             return
         if not add_without_download.value:
-            mt_connector.queue_download(urls or url, add_without_download=add_without_download.value)
+            mt_connector.queue_download(
+                urls or url, add_without_download=add_without_download.value
+            )
 
-        url_input.value = ''
+        url_input.value = ""
 
     except Exception as e:
-        ui.notify(f'Error: {e}', color='negative')
+        ui.notify(f"Error: {e}", color="negative")
         return
 
-ui.button('Submit', on_click=on_submit)
 
-ui.run(host='0.0.0.0', port=8080)
+ui.button("Submit", on_click=on_submit)
 
+ui.run(host="0.0.0.0", port=8080)
