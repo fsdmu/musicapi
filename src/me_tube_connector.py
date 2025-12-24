@@ -1,4 +1,5 @@
 """Module for connecting to MeTube API and queuing downloads."""
+
 import json
 import os
 from typing import List, Optional
@@ -7,7 +8,7 @@ import requests
 
 import logging
 
-import src.logging_config
+import src.logging_config  # noqa: F401
 
 from src.database_connector import DatabaseConnector
 from src.youtube_album_fetcher import YoutubeAlbumFetcher
@@ -23,29 +24,35 @@ class MeTubeConnector:
         """Initialize MeTubeConnector.
 
         Args:
-            base_url: Base URL for MeTube API. If None, will use the ME_TUBE_API_URL environment variable.
+            base_url: Base URL for MeTube API. If None, will use the
+                ME_TUBE_API_URL environment variable.
 
         """
         self.base_url = base_url or os.environ.get("ME_TUBE_API_URL")
         self.db_connector = DatabaseConnector()
 
-    def queue_download(self, url: str | List[str],
-                       quality: str = "Best",
-                       format: str = "mp3",
-                       add_without_download: bool = False) -> Optional[List[requests.Response]]:
+    def queue_download(
+        self,
+        url: str | List[str],
+        quality: str = "Best",
+        format: str = "mp3",
+        add_without_download: bool = False,
+    ) -> Optional[List[requests.Response]]:
         """Queue a download for the given URL(s).
 
         Args:
             url: A single YouTube URL or a list of URLs to queue for download.
             quality: Desired quality of the download. Default is "Best".
             format: Desired format of the download. Default is "mp3".
-            add_without_download: If True, will add the URL to the database without queuing a download.
+            add_without_download: If True, will add the URL to the
+                database without queuing a download.
 
         Returns:
-            A list of responses from the MeTube API if downloads were queued, otherwise None.
+            A list of responses from the MeTube API if downloads were queued,
+                otherwise None.
 
         """
-        if type(url) == str:
+        if type(url) is str:
             url = [url]
         responses = []
         for url in url:
