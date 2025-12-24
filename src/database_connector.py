@@ -76,7 +76,7 @@ class DatabaseConnector:
             result = conn.execute(stmt).fetchone()
             return result[0] if result else None
 
-    def add_artist(self, artist_url: str) -> Row[Any]:
+    def add_artist(self, artist_url: str) -> Optional[Row[Any]]:
         """Add an artist to the database if not already present.
 
         Args:
@@ -95,7 +95,7 @@ class DatabaseConnector:
             conn.commit()
             return res
 
-    def add_album(self, album_url: str) -> Row[Any]:
+    def add_album(self, album_url: str) -> Optional[Row[Any]]:
         """Add an album to the database if not already present.
 
         Args:
@@ -114,7 +114,7 @@ class DatabaseConnector:
             conn.commit()
             return res
 
-    def add_song(self, song_url: str) -> Row[Any]:
+    def add_song(self, song_url: str) -> Optional[Row[Any]]:
         """Add a song to the database if not already present.
 
         Args:
@@ -158,6 +158,8 @@ class DatabaseConnector:
                 insert_stmt = insert(Artist).values(url=artist_url, auto_download=True)
                 result = conn.execute(insert_stmt)
                 conn.commit()
+                if not result.inserted_primary_key:
+                    return None
                 return result.inserted_primary_key[0]
 
     def get_auto_download_artists(self) -> List[str]:
