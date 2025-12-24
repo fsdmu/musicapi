@@ -37,8 +37,25 @@ jobs:
       - name: Get version tag
         id: get_version
         run: |
-          VERSION=$(grep -m 1 '^version =' pyproject.toml | cut -d '"' -f 2)
+          CURRENT_VERSION=$(grep -m 1 '^version =' pyproject.toml | cut -d '"' -f 2)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          
+          LATEST_TAG=$(gh release list --limit 1 | awk '{print $1}' | sed 's/^v//')
+          if [ -z "$LATEST_TAG" ]; then LATEST_TAG="0.0.0"; fi
+          
+          echo "Latest tag: $LATEST_TAG"
+          IFS='.' read -ra CUR <<< "$CURRENT_VER"
+          IFS='.' read -ra LAT <<< "$LATEST_TAG"
+          
+          IS_NEW_MINOR=false
+          if [ "${CUR[1]}" -gt "${LAT[1]}" ] || [ "${CUR[0]}" -gt "${LAT[0]}" ]; then
+            IS_NEW_MINOR=true
+          fi
+
+          echo "VERSION=$CURRENT_VER" >> $GITHUB_OUTPUT
+          echo "IS_NEW_MINOR=$IS_NEW_MINOR" >> $GITHUB_OUTPUT
+          echo "Current: $CURRENT_VER, Latest: $LATEST_TAG, Is New Minor: $IS_NEW_MINOR"
+          
 
       - name: Build the Docker image
         run: |
@@ -47,7 +64,10 @@ jobs:
             --tag ghcr.io/fsdmu/musicapi:${{ steps.get_version.outputs.VERSION }}
 
       - name: Log in to GitHub Container Registry
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: >
+          github.event_name == 'push' && 
+          github.ref == 'refs/heads/main' && 
+          steps.check_version.outputs.IS_NEW_MINOR == 'true'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -55,14 +75,20 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push the Docker image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: >
+          github.event_name == 'push' && 
+          github.ref == 'refs/heads/main' && 
+          steps.check_version.outputs.IS_NEW_MINOR == 'true'
         run: |
           docker push ghcr.io/fsdmu/musicapi:${{ steps.get_version.outputs.VERSION }}
           docker tag ghcr.io/fsdmu/musicapi:${{ steps.get_version.outputs.VERSION }} ghcr.io/fsdmu/musicapi:latest
           docker push ghcr.io/fsdmu/musicapi:latest
 
       - name: Create GitHub Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: >
+          github.event_name == 'push' && 
+          github.ref == 'refs/heads/main' && 
+          steps.check_version.outputs.IS_NEW_MINOR == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.get_version.outputs.VERSION }}
