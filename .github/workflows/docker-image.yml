@@ -52,7 +52,7 @@ jobs:
             IS_NEW_MINOR=true
           fi
 
-          echo "VERSION=$CURRENT_VER" >> $GITHUB_OUTPUT
+          echo "CURRENT_VERSION=$CURRENT_VER" >> $GITHUB_OUTPUT
           echo "IS_NEW_MINOR=$IS_NEW_MINOR" >> $GITHUB_OUTPUT
           echo "Current: $CURRENT_VER, Latest: $LATEST_TAG, Is New Minor: $IS_NEW_MINOR"
           
