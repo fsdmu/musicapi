@@ -134,17 +134,17 @@ class DatabaseConnector:
         existing_artist_id = self.get_artist_id(artist_url)
         with self.engine.connect() as conn:
             if existing_artist_id is not None:
-                stmt = (
+                update_stmt = (
                     sa.update(Artist)
                     .where(Artist.id == existing_artist_id)
                     .values(auto_download=True)
                 )
-                conn.execute(stmt)
+                conn.execute(update_stmt)
                 conn.commit()
                 return existing_artist_id
             else:
-                stmt = insert(Artist).values(url=artist_url, auto_download=True)
-                result = conn.execute(stmt)
+                insert_stmt = insert(Artist).values(url=artist_url, auto_download=True)
+                result = conn.execute(insert_stmt)
                 conn.commit()
                 return result.inserted_primary_key[0]
 
@@ -191,7 +191,7 @@ class DatabaseConnector:
 
             return result[0] if result else None
 
-    def get_album(self, album_url) -> Row[Any]:
+    def get_album(self, album_url) -> Optional[Row[Any]]:
         """Get the album ID for a given album URL.
 
         Args:
@@ -206,7 +206,7 @@ class DatabaseConnector:
             result = conn.execute(stmt).fetchone()
             return result[0] if result else None
 
-    def get_artist(self, artist_url) -> Row[Any]:
+    def get_artist(self, artist_url) -> Optional[Row[Any]]:
         """Get the artist ID for a given artist URL.
 
         Args:

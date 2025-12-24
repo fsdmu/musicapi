@@ -126,7 +126,7 @@ class YoutubeAlbumFetcher:
         return songs
 
     @staticmethod
-    def get_eps(artist_details: Dict) -> List[str]:
+    def get_eps(artist_details: Dict) -> List[str | Any]:
         """Fetch EPs for a given artist ID from YouTube Music.
 
         Args:
