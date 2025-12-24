@@ -39,7 +39,7 @@ jobs:
         id: get_version
         run: |
           CURRENT_VERSION=$(grep -m 1 '^version =' pyproject.toml | cut -d '"' -f 2)
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "CURRENT_VERSION=CURRENT_$VERSION" >> $GITHUB_OUTPUT
           
           LATEST_TAG=$(gh release list --limit 1 | awk '{print $1}' | sed 's/^v//')
           if [ -z "$LATEST_TAG" ]; then LATEST_TAG="0.0.0"; fi
