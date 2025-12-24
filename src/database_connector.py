@@ -49,6 +49,18 @@ class DatabaseConnector:
 
         self.engine = self._get_engine()
 
+    def remove_album(self, album_url: str) -> None:
+        """Remove an album from the database.
+
+        Args:
+            album_url: The URL of the album to remove.
+
+        """
+        stmt = sa.delete(Albums).where(Albums.url == album_url)
+        with self.engine.connect() as conn:
+            conn.execute(stmt)
+            conn.commit()
+
     def get_artist_id(self, artist_url: str) -> Optional[int]:
         """Get the artist ID for a given artist URL.
 

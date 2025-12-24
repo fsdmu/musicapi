@@ -3,9 +3,9 @@
 import logging
 import src.logging_config  # initialize logging  # noqa: F401
 
-from src.me_tube_connector import MeTubeConnector
+from src.youtube_handler.me_tube_connector import MeTubeConnector
 from src.database_connector import DatabaseConnector
-from src.youtube_album_fetcher import YoutubeAlbumFetcher
+from src.youtube_handler.youtube_album_fetcher import YoutubeAlbumFetcher
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
