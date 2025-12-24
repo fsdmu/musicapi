@@ -39,3 +39,13 @@ jobs:
           docker push ghcr.io/fsdmu/musicapi:${{ steps.get_version.outputs.VERSION }}
           docker tag ghcr.io/fsdmu/musicapi:${{ steps.get_version.outputs.VERSION }} ghcr.io/fsdmu/musicapi:latest
           docker push ghcr.io/fsdmu/musicapi:latest
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.get_version.outputs.VERSION }}
+          name: v${{ steps.get_version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
