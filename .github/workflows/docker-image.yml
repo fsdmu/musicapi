@@ -62,7 +62,7 @@ jobs:
         run: |
           docker build . \
             --file Dockerfile \
-            --tag ghcr.io/fsdmu/musicapi:${{ steps.get_version.outputs.VERSION }}
+            --tag ghcr.io/fsdmu/musicapi:${{ steps.get_version.outputs.CURRENT_VERSION }}
 
       - name: Log in to GitHub Container Registry
         if: >
