@@ -1,5 +1,3 @@
-import pytest
-
 from src.youtube_handler.youtube_download_handler import YoutubeDownloadHandler
 
 
@@ -8,8 +6,12 @@ def _stub_handler(monkeypatch):
         def __init__(self, *args, **kwargs):
             pass
 
-    monkeypatch.setattr("src.youtube_handler.youtube_download_handler.MeTubeConnector", DummyMt)
-    monkeypatch.setattr("src.youtube_handler.youtube_download_handler.DatabaseConnector", lambda: None)
+    monkeypatch.setattr(
+        "src.youtube_handler.youtube_download_handler.MeTubeConnector", DummyMt
+    )
+    monkeypatch.setattr(
+        "src.youtube_handler.youtube_download_handler.DatabaseConnector", lambda: None
+    )
 
 
 def test_get_warning_discourages_plain_youtube(monkeypatch):

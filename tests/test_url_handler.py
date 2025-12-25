@@ -14,7 +14,7 @@ def test_get_handler_returns_youtube_handler(monkeypatch):
     monkeypatch.setattr("src.url_handler.DatabaseConnector", lambda: dummy_db)
     monkeypatch.setattr("src.url_handler.YoutubeDownloadHandler", DummyHandler)
 
-    handler = UrlHandler.get_handler("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    handler = UrlHandler.get_handler("https://www.youtube.com/watch?v=wdQw4w9WgXcQ")
 
     assert isinstance(handler, DummyHandler)
     assert handler.db is dummy_db
