@@ -46,15 +46,15 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          tox -e py311 -- --cov=musicapi --cov-report=xml
+          tox -e py311 -- --cov=src --cov-report=xml
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always() # Upload even if tests fail so you can debug
         with:
-          files: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: true
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 7
 
 
   build-and-push:
