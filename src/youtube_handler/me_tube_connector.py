@@ -65,50 +65,113 @@ class MeTubeConnector:
             url = [url]
         responses = []
         for single_url in url:
+            response = self._download_url(
+                single_url,
+                quality,
+                download_format,
+                add_without_download,
+            )
+            if response is not None:
+                responses.append(response)
 
-            is_song = "watch" in single_url
-            is_playlist = "playlist" in single_url
-
-            if is_playlist:
-                album_result = self.db_connector.get_album(single_url)
-                if album_result is not None:
-                    logger.info(f"Album {single_url} already in database, skipping.")
-                    continue
-
-            elif is_song:
-                song_result = self.db_connector.get_song(single_url)
-                if song_result is not None:
-                    logger.info(f"Song {single_url} already in database, skipping.")
-                    continue
-
-            if not add_without_download:
-                data = {
-                    "url": single_url,
-                    "quality": quality,
-                    "format": download_format,
-                }
-                req = requests.post(
-                    f"{self.base_url}/add",
-                    data=json.dumps(data),
-                    headers={"Content-Type": "application/json"},
-                )
-                responses.append(req)
-                if req.status_code != 200:
-                    logger.error(f"Request failed with status code {req.status_code}")
-                    logger.info(f"Response: {req.text}")
-                    return None
-
-                logger.info(f"Successfully queued download for URL: {single_url}")
-
-            if is_playlist:
-                album_id = single_url.split("list=")[1].split("&")[0]
-                self.db_connector.add_album(single_url)
-                song_urls = YoutubeAlbumFetcher.get_album_songs(album_id)
-                for song_url in song_urls:
-                    self.db_connector.add_song(song_url)
-            elif is_song:
-                self.db_connector.add_song(single_url)
-            else:
-                raise ValueError(f"Unsupported URL format: {single_url}")
         logger.info("Responses: %s", responses)
         return responses
+
+    def _download_url(self,
+                      single_url: str,
+                      quality: str,
+                      download_format: str,
+                      add_without_download: bool,
+                      ) -> Optional[requests.Response]:
+        """Helper method to download a single URL.
+
+            This only supports individual song and playlist URLs.
+
+        Args:
+            single_url: The YouTube URL to queue for download.
+            quality: Desired quality of the download.
+            download_format: Desired download_format of the download.
+            add_without_download: If True, will add the URL to the
+                database without queuing a download.
+
+        Returns:
+            The response from the MeTube API if download was queued,
+                otherwise None.
+
+        Raises:
+            ValueError: If the URL format is unsupported.
+
+        """
+        is_song = "watch" in single_url
+        is_playlist = "playlist" in single_url
+
+        if is_playlist:
+            album_result = self.db_connector.get_album(single_url)
+            if album_result is not None:
+                logger.info(f"Album {single_url} already in database, skipping.")
+                return None
+        elif is_song:
+            song_result = self.db_connector.get_song(single_url)
+            if song_result is not None:
+                logger.info(f"Song {single_url} already in database, skipping.")
+                return None
+        else:
+            raise ValueError(f"Unsupported URL format: {single_url}")
+
+        if not add_without_download:
+            response = self._add_to_me_tube(
+                single_url,
+                quality,
+                download_format,
+            )
+        else:
+            response = None
+
+        if is_playlist:
+            if not "list=" in single_url:
+                raise ValueError(f"Invalid playlist URL: {single_url}")
+
+            album_id = single_url.split("list=")[1].split("&")[0]
+            self.db_connector.add_album(single_url)
+            song_urls = YoutubeAlbumFetcher.get_album_songs(album_id)
+            for song_url in song_urls:
+                self.db_connector.add_song(song_url)
+        elif is_song:
+            self.db_connector.add_song(single_url)
+
+        return response
+
+    def _add_to_me_tube(self,
+                        single_url: str,
+                        quality: str,
+                        download_format: str,
+                        ) -> Optional[requests.Response]:
+        """Helper method to add a URL to MeTube without database checks.
+
+        Args:
+            single_url: The YouTube URL to queue for download.
+            quality: Desired quality of the download.
+            download_format: Desired download_format of the download.
+
+        Returns:
+            The response from the MeTube API if download was queued,
+                otherwise None.
+
+        """
+        data = {
+            "url": single_url,
+            "quality": quality,
+            "format": download_format,
+        }
+        response = requests.post(
+            f"{self.base_url}/add",
+            data=json.dumps(data),
+            headers={"Content-Type": "application/json"},
+        )
+        if response.status_code != 200:
+            logger.error(f"Request failed with status code {response.status_code}")
+            logger.info(f"Response: {response.text}")
+            return None
+
+        logger.info(f"Successfully queued download for URL: {single_url}")
+        return response
