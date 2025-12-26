@@ -53,7 +53,12 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
         add_without_download = kwargs.get("add_without_download", False)
 
         if "channel" in url:
-            self._handle_channel_url(url, auto_download)
+            self._handle_channel_url(
+                url,
+                auto_download,
+                quality=quality,
+                download_format=download_format,
+            )
         elif "playlist" in url or "watch?v=" in url:
             self.mt_connector.queue_download(
                 url,
@@ -67,7 +72,12 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
             raise ValueError(error)
 
     def _handle_channel_url(
-        self, channel_url: str, auto_download: bool, add_without_download: bool = False
+        self,
+        channel_url: str,
+        auto_download: bool,
+        quality: str,
+        download_format: str,
+        add_without_download: bool = False,
     ) -> None:
         """Handle adding a YouTube channel URL to the database.
 
@@ -79,15 +89,13 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
 
         """
         album_urls = YoutubeAlbumFetcher.get_album_ids(channel_url)
-        self.db_connector.add_artist(channel_url)
-        if auto_download:
-            self.db_connector.add_auto_download_artist(channel_url)
+        self.db_connector.add_artist(channel_url, auto_download=auto_download)
         for album_url in album_urls:
             try:
                 self.mt_connector.queue_download(
                     album_url,
-                    quality="Best",
-                    download_format="mp3",
+                    quality=quality,
+                    download_format=download_format,
                     add_without_download=add_without_download,
                 )
 
