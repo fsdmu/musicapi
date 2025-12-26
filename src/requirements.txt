@@ -34,7 +34,7 @@ Pygments==2.19.2
 python-dotenv==1.2.1
 python-engineio==4.12.3
 python-multipart==0.0.20
-python-socketio==5.15.0
+python-socketio==5.16.0
 PyYAML==6.0.3
 requests==2.32.5
 simple-websocket==1.1.0
