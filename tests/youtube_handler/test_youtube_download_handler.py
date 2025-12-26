@@ -15,6 +15,7 @@ def test_youtube_download_handler_init(mock_me_tube_connector, mock_db_connector
     assert handler.mt_connector == mock_me_tube_connector()
 
 
+@pytest.mark.parametrize("quality,download_format", [("Best", "mp3"), ("High", "mp4")])
 @patch("src.youtube_handler.youtube_download_handler.DatabaseConnector")
 @patch("src.youtube_handler.youtube_download_handler.MeTubeConnector")
 @patch(
@@ -25,14 +26,26 @@ def test_download_channel_url(
     mock_handle_channel_url,
     mock_me_tube_connector,
     mock_db_connector,
+    quality,
+    download_format,
 ):
     """Test downloading from a channel URL."""
     handler = YoutubeDownloadHandler(db_connector=mock_db_connector)
     url = "https://www.youtube.com/channel/CHANNEL_ID"
 
-    handler.download(url, auto_download=True)
+    handler.download(
+        url,
+        auto_download=True,
+        quality=quality,
+        download_format=download_format,
+    )
 
-    mock_handle_channel_url.assert_called_once_with(url, True)
+    mock_handle_channel_url.assert_called_once_with(
+        url,
+        True,
+        quality=quality,
+        download_format=download_format,
+    )
     assert not mock_me_tube_connector().queue_download.called
 
 
@@ -184,3 +197,14 @@ def test_get_warning(mock_me_tube_connector, mock_db_connector):
     result = handler.get_warning(url)
 
     assert "music.youtube.com" in result
+
+
+@patch("src.youtube_handler.youtube_download_handler.DatabaseConnector")
+@patch("src.youtube_handler.youtube_download_handler.MeTubeConnector")
+def test_get_warning_no_warning(mock_me_tube_connector, mock_db_connector):
+    url = "music.youtube.com/watch"
+    handler = YoutubeDownloadHandler(db_connector=mock_db_connector)
+
+    result = handler.get_warning(url)
+
+    assert result is None
