@@ -41,7 +41,7 @@ dependencies = [
     "MarkupSafe==3.0.3",
     "multidict==6.7.0",
     "nicegui==3.4.1",
-    "orjson==3.11.4",
+    "orjson==3.11.5",
     "propcache==0.4.1",
     "pydantic==2.12.5",
     "pydantic_core==2.41.5",
