@@ -50,5 +50,5 @@ watchfiles==1.1.1
 websockets==15.0.1
 wsproto==1.3.2
 yarl==1.22.0
-ytmusicapi==1.11.1
+ytmusicapi==1.11.4
 mysql-connector==2.2.9
