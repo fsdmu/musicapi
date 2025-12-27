@@ -77,13 +77,14 @@ class MeTubeConnector:
         logger.info("Responses: %s", responses)
         return responses
 
-    def _download_url(self,
-                      single_url: str,
-                      quality: str,
-                      download_format: str,
-                      add_without_download: bool,
-                      ) -> Optional[requests.Response]:
-        """Helper method to download a single URL.
+    def _download_url(
+        self,
+        single_url: str,
+        quality: str,
+        download_format: str,
+        add_without_download: bool,
+    ) -> Optional[requests.Response]:
+        """Download a single URL.
 
             This only supports individual song and playlist URLs.
 
@@ -128,7 +129,7 @@ class MeTubeConnector:
             response = None
 
         if is_playlist:
-            if not "list=" in single_url:
+            if "list=" not in single_url:
                 raise ValueError(f"Invalid playlist URL: {single_url}")
 
             album_id = single_url.split("list=")[1].split("&")[0]
@@ -141,12 +142,13 @@ class MeTubeConnector:
 
         return response
 
-    def _add_to_me_tube(self,
-                        single_url: str,
-                        quality: str,
-                        download_format: str,
-                        ) -> Optional[requests.Response]:
-        """Helper method to add a URL to MeTube without database checks.
+    def _add_to_me_tube(
+        self,
+        single_url: str,
+        quality: str,
+        download_format: str,
+    ) -> Optional[requests.Response]:
+        """Add URL to MeTube without database checks.
 
         Args:
             single_url: The YouTube URL to queue for download.
