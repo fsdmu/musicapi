@@ -37,6 +37,9 @@ class YoutubeAlbumFetcher:
             The YouTube Music artist ID.
 
         """
+        if not url or "channel/" not in url:
+            raise ValueError(f"Invalid YouTube Music channel URL: {url}")
+
         id_side = url.split("channel/")[1]
         return id_side.split("/")[0]
 
@@ -50,6 +53,8 @@ class YoutubeAlbumFetcher:
         Returns:
             The full YouTube Music playlist URL.
         """
+        if not playlist_id:
+            raise ValueError("Playlist ID cannot be empty")
         return r"https://music.youtube.com/playlist?list=" + playlist_id
 
     @staticmethod
@@ -142,6 +147,8 @@ class YoutubeAlbumFetcher:
 
         for item in releases:
             playlist_id = item.get("browseId")
+            if not playlist_id:
+                continue
             album_details = ytmusic.get_album(playlist_id)
 
             track_count = len(album_details.get("tracks", []))
