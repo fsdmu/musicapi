@@ -76,11 +76,12 @@ class DatabaseConnector:
             result = conn.execute(stmt).fetchone()
             return result[0] if result else None
 
-    def add_artist(self, artist_url: str) -> Optional[Row[Any]]:
+    def add_artist(self, artist_url: str, auto_download: bool) -> Optional[Row[Any]]:
         """Add an artist to the database if not already present.
 
         Args:
             artist_url: The URL of the artist.
+            auto_download: Whether to mark the artist for auto-download.
 
         Returns:
             The artist ID.
@@ -88,8 +89,10 @@ class DatabaseConnector:
         """
         artist = self.get_artist(artist_url)
         if artist is not None:
+            if auto_download and not artist.auto_download:
+                self.add_auto_download_artist(artist_url)
             return artist
-        stmt = insert(Artist).values(url=artist_url)
+        stmt = insert(Artist).values(url=artist_url, auto_download=auto_download)
         with self.engine.connect() as conn:
             res = conn.execute(stmt).inserted_primary_key
             conn.commit()
