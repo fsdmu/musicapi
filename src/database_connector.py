@@ -23,18 +23,18 @@ class Artist(Base):
     auto_download = sa.Column(sa.Boolean, default=False)
 
 
-class Albums(Base):
+class Album(Base):
     """SQLAlchemy model for the 'albums' table."""
 
-    __tablename__ = "albums"
+    __tablename__ = "album"
     id = sa.Column(sa.Integer, primary_key=True)
     url = sa.Column(sa.String, unique=True)
 
 
-class Songs(Base):
+class Song(Base):
     """SQLAlchemy model for the 'songs' table."""
 
-    __tablename__ = "songs"
+    __tablename__ = "song"
     id = sa.Column(sa.Integer, primary_key=True)
     url = sa.Column(sa.String, unique=True)
 
@@ -56,7 +56,7 @@ class DatabaseConnector:
             album_url: The URL of the album to remove.
 
         """
-        stmt = sa.delete(Albums).where(Albums.url == album_url)
+        stmt = sa.delete(Album).where(Album.url == album_url)
         with self.engine.connect() as conn:
             conn.execute(stmt)
             conn.commit()
@@ -111,7 +111,7 @@ class DatabaseConnector:
         album = self.get_album(album_url)
         if album is not None:
             return album
-        stmt = insert(Albums).values(url=album_url)
+        stmt = insert(Album).values(url=album_url)
         with self.engine.connect() as conn:
             res = conn.execute(stmt).inserted_primary_key
             conn.commit()
@@ -130,7 +130,7 @@ class DatabaseConnector:
         song = self.get_song(song_url)
         if song is not None:
             return song
-        stmt = insert(Songs).values(url=song_url)
+        stmt = insert(Song).values(url=song_url)
         with self.engine.connect() as conn:
             res = conn.execute(stmt).inserted_primary_key
             conn.commit()
@@ -181,18 +181,18 @@ class DatabaseConnector:
             The song ID if found, otherwise None.
 
         """
-        stmt = select(Songs.id).where(Songs.url == song_url)
+        stmt = select(Song.id).where(Song.url == song_url)
         with self.engine.connect() as conn:
             result = conn.execute(stmt).fetchone()
 
             if not result:
                 if "music.youtube.com" in song_url:
                     alt_url = song_url.replace("music.youtube.com", "youtube.com")
-                    stmt = select(Songs.id).where(Songs.url == alt_url)
+                    stmt = select(Song.id).where(Song.url == alt_url)
                     result = conn.execute(stmt).fetchone()
                 elif "youtube.com" in song_url:
                     alt_url = song_url.replace("youtube.com", "music.youtube.com")
-                    stmt = select(Songs.id).where(Songs.url == alt_url)
+                    stmt = select(Song.id).where(Song.url == alt_url)
                     result = conn.execute(stmt).fetchone()
                 else:
                     return None
@@ -209,7 +209,7 @@ class DatabaseConnector:
             The album ID if found, otherwise None.
 
         """
-        stmt = select(Albums.id).where(Albums.url == album_url)
+        stmt = select(Album.id).where(Album.url == album_url)
         with self.engine.connect() as conn:
             result = conn.execute(stmt).fetchone()
             return result[0] if result else None
