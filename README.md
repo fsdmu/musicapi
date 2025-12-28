@@ -5,7 +5,7 @@ store the url to the downloaded songs and albums in a database,
 thus preventing them from being downloaded multiple times.
 You can also download all albums and eps of an artist by  providing the link to that artist. 
 When toggling download future albums of an artist all future albums of that  artist will be downloaded as well.
-To enable this feature you have to run a reoccurring job on the machine that calls  the "auto_download_artist.py" 
+To enable this feature you have to run a reoccurring job on the machine that calls the "auto_download_artist.py" 
 script periodically. 
 
 The exact behavior could differ by handler to handler.
@@ -50,8 +50,11 @@ All database providers that are compatible with SQLAlchemy can be implemented ve
   - 'id' Column as an Integer primary key with auto increment
   - 'url' Column as Varchar and a Unique constraint
 
+## Usage
 
-**Environment Variables**
+It is strongly recommended to run the script via the Dockerfile.
+
+### Environment Setup
 
 - Database information
   - "DB_URL"
@@ -61,24 +64,14 @@ All database providers that are compatible with SQLAlchemy can be implemented ve
     'DELETE' permissions 
     - "DB_USER"
     - "DB_PASSWORD"
-
-## CLI Usage
-
-Assuming the script is located in /app:
-
-#### Web Interface
-
-```bash
-python3 -m pip install -r ./src/requirements.txt
-python3 ./src/webui.py
-```
-
-It is strongly recommended to run the script via the Dockerfile.
+- MeTube information
+  - "ME_TUBE_API_URL"
 
 
-#### Auto Download of Artists
+### Auto Download of Artists
 
-TODO
+To enable the automatic download of artists a reoccurring job needs to be run that calls the "auto_download_artist.py" 
+script. The same environment setup as for the regular web service is necessary for this.
 
 ## Releases
 
