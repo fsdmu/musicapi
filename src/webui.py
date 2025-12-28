@@ -22,7 +22,7 @@ with ui.right_drawer(top_corner=True, value=False).style(
     # )
     audio_format = ui.select(
         ["mp3", "wav", "flac", "m4a"], label="Select download format", value="mp3"
-    ).classes('w-full')
+    ).classes("w-full")
 
 
 ui.button(icon="code", on_click=lambda: right_drawer.toggle()).classes(  # type: ignore
