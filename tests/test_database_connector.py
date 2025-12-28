@@ -1,10 +1,8 @@
 import pytest
 import sqlalchemy as sa
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import patch, MagicMock
 
-from sqlalchemy import select
-
-from src.database_connector import DatabaseConnector, Base, Artist
+from src.database_connector import DatabaseConnector, Base
 
 
 @pytest.fixture
@@ -14,11 +12,11 @@ def db():
         "DB_PASSWORD": "test",
         "DB_URL": "localhost",
         "DB_PORT": "3306",
-        "DB_DATABASE": "test"
+        "DB_DATABASE": "test",
     }
 
     with patch.dict("os.environ", mock_env):
-        with patch.object(DatabaseConnector, '_get_engine') as mocked_engine:
+        with patch.object(DatabaseConnector, "_get_engine") as mocked_engine:
             engine = sa.create_engine("sqlite:///:memory:")
             mocked_engine.return_value = engine
 
@@ -29,6 +27,7 @@ def db():
             yield connector
 
     engine.dispose()
+
 
 @pytest.mark.parametrize("auto_download", [True, False])
 def test_add_and_get_artist(db, auto_download):
@@ -98,23 +97,17 @@ def test_remove_album_no_album(db):
     assert db.get_album(url) is None
 
 
-@pytest.mark.parametrize("auto_download", [True, False])
-def test_add_artist(db, auto_download):
-    url = "https://example.com/artist/99"
-    db.add_artist(url, auto_download=auto_download)
-
-
-
 @pytest.mark.parametrize(
-    "initial_auto_download,update_auto_download,expected_auto_download", [
-    (True, True, True), (True, False, True), (False, True, True), (False, False, False)
-    ]
+    "initial_auto_download,update_auto_download,expected_auto_download",
+    [
+        (True, True, True),
+        (True, False, True),
+        (False, True, True),
+        (False, False, False),
+    ],
 )
 def test_add_artist_existing(
-        db,
-        initial_auto_download,
-        update_auto_download,
-        expected_auto_download
+    db, initial_auto_download, update_auto_download, expected_auto_download
 ):
     url = "https://example.com/artist/99"
     db.add_artist(url, auto_download=initial_auto_download)
@@ -159,5 +152,3 @@ def test_get_engine(mock_create_engine):
 
     expected_conn_str = f"mysql+mysqlconnector://{user}:{pw}@{url}:{port}/{db}"
     mock_create_engine.assert_called_once_with(expected_conn_str)
-
-

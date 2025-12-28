@@ -4,7 +4,7 @@ import os
 from typing import List, Optional, Any
 
 import sqlalchemy as sa
-from sqlalchemy import insert, Engine, select, Row, Column
+from sqlalchemy import insert, Engine, select, Row
 from sqlalchemy.orm import DeclarativeBase
 
 
@@ -115,7 +115,7 @@ class DatabaseConnector:
         with self.engine.connect() as conn:
             res = conn.execute(stmt).inserted_primary_key
             conn.commit()
-            return res[0]
+            return res[0] if res else None
 
     def add_song(self, song_url: str) -> Optional[Row[Any]]:
         """Add a song to the database if not already present.
@@ -134,7 +134,7 @@ class DatabaseConnector:
         with self.engine.connect() as conn:
             res = conn.execute(stmt).inserted_primary_key
             conn.commit()
-            return res[0]
+            return res[0] if res else None
 
     def _add_auto_download_existing_artist(self, artist_id: int) -> Any:
         """Mark an artist for auto-download in the database.
