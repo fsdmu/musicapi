@@ -50,6 +50,15 @@ It is strongly recommended to run the script via the Dockerfile.
 
 TODO
 
+## Releases
+
+### 0.4.0
+
+- Improve ui with help icon
+- Update Documentation
+- Remove developer option for adding artist without download
+- Add option to select different audio formats
+- Bugfixes
 
 ## License
 
