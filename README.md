@@ -80,6 +80,7 @@ script. The same environment setup as for the regular web service is necessary f
 - Improve ui with help icon
 - Remove developer option for adding artist without download
 - Add option to select different audio formats
+- Update Table names for albums and songs
 - Bugfixes
 - Update Documentation
 
