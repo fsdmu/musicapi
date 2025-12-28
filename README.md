@@ -11,10 +11,9 @@ script periodically.
 The exact behavior could differ by handler to handler.
 
 
-
 ## Intended Setup
 
-The webui service is supposed to be run on a machine with access to a supported download handler.
+The webui service is supposed to be run on a machine with access to a supported download handler. 
 
 
 ## Supported Services
@@ -30,7 +29,38 @@ These are the lists of currently supported Services.
 
 All database providers that are compatible with SQLAlchemy can be implemented very easily without any issues.
 
-- [MySQL](https://www.mysql.com/)
+#### [MySQL](https://www.mysql.com/)
+
+
+**Database Setup**
+
+- Artist table
+  - 'artist' as tablename
+  - 'id' Column as an Integer primary key with auto increment
+  - 'url' Column as Varchar and a Unique constraint
+  - 'auto_download' as Boolean which defaults to false
+
+- Album table
+  - 'album' as tablename
+  - 'id' Column as an Integer primary key with auto increment
+  - 'url' Column as Varchar and a Unique constraint
+
+- Song table
+  - 'song' as tablename
+  - 'id' Column as an Integer primary key with auto increment
+  - 'url' Column as Varchar and a Unique constraint
+
+
+**Environment Variables**
+
+- Database information
+  - "DB_URL"
+  - "DB_PORT"
+  - "DB_DATABASE"
+- Username and password for an account with 'SELECT', 'INSERT', 'UPDATE' and 
+    'DELETE' permissions 
+    - "DB_USER"
+    - "DB_PASSWORD"
 
 ## CLI Usage
 
@@ -55,10 +85,10 @@ TODO
 ### 0.4.0
 
 - Improve ui with help icon
-- Update Documentation
 - Remove developer option for adding artist without download
 - Add option to select different audio formats
 - Bugfixes
+- Update Documentation
 
 ## License
 
