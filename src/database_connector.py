@@ -4,7 +4,7 @@ import os
 from typing import List, Optional, Any
 
 import sqlalchemy as sa
-from sqlalchemy import insert, Engine, select, Row
+from sqlalchemy import insert, Engine, select, Row, Column
 from sqlalchemy.orm import DeclarativeBase
 
 
@@ -90,7 +90,7 @@ class DatabaseConnector:
         artist = self.get_artist(artist_url)
         if artist is not None:
             if auto_download and not artist.auto_download:
-                self.add_auto_download_artist(artist_url)
+                self._add_auto_download_existing_artist(artist[0])
             return artist
         stmt = insert(Artist).values(url=artist_url, auto_download=auto_download)
         with self.engine.connect() as conn:
@@ -115,7 +115,7 @@ class DatabaseConnector:
         with self.engine.connect() as conn:
             res = conn.execute(stmt).inserted_primary_key
             conn.commit()
-            return res
+            return res[0]
 
     def add_song(self, song_url: str) -> Optional[Row[Any]]:
         """Add a song to the database if not already present.
@@ -134,36 +134,27 @@ class DatabaseConnector:
         with self.engine.connect() as conn:
             res = conn.execute(stmt).inserted_primary_key
             conn.commit()
-            return res
+            return res[0]
 
-    def add_auto_download_artist(self, artist_url: str) -> Optional[int]:
+    def _add_auto_download_existing_artist(self, artist_id: int) -> Any:
         """Mark an artist for auto-download in the database.
 
         Args:
-            artist_url: The URL of the artist.
+            artist_id: The id of the artist.
 
         Returns:
             The artist ID.
 
         """
-        existing_artist_id = self.get_artist_id(artist_url)
         with self.engine.connect() as conn:
-            if existing_artist_id is not None:
-                update_stmt = (
-                    sa.update(Artist)
-                    .where(Artist.id == existing_artist_id)
-                    .values(auto_download=True)
-                )
-                conn.execute(update_stmt)
-                conn.commit()
-                return existing_artist_id
-            else:
-                insert_stmt = insert(Artist).values(url=artist_url, auto_download=True)
-                result = conn.execute(insert_stmt)
-                conn.commit()
-                if not result.inserted_primary_key:
-                    return None
-                return result.inserted_primary_key[0]
+            update_stmt = (
+                sa.update(Artist)
+                .where(Artist.id == artist_id)
+                .values(auto_download=True)
+            )
+            res = conn.execute(update_stmt)
+            conn.commit()
+            return res
 
     def get_auto_download_artists(self) -> List[str]:
         """Retrieve a list of artist URLs marked for auto-download.
@@ -223,7 +214,7 @@ class DatabaseConnector:
             result = conn.execute(stmt).fetchone()
             return result[0] if result else None
 
-    def get_artist(self, artist_url) -> Optional[Row[Any]]:
+    def get_artist(self, artist_url: str) -> Optional[Row[Any]]:
         """Get the artist ID for a given artist URL.
 
         Args:
@@ -233,10 +224,10 @@ class DatabaseConnector:
             The artist ID if found, otherwise None.
 
         """
-        stmt = select(Artist.id).where(Artist.url == artist_url)
+        stmt = select(Artist).where(Artist.url == artist_url)
         with self.engine.connect() as conn:
             result = conn.execute(stmt).fetchone()
-            return result[0] if result else None
+            return result if result else None
 
     @staticmethod
     def _get_engine() -> Engine:
