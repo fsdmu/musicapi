@@ -13,7 +13,7 @@ The exact behavior could differ by handler to handler.
 
 ## Intended Setup
 
-The webui service is supposed to be run on a machine with access to a supported download handler. 
+The web service is supposed to be run on a machine with access to a supported download handler. 
 
 
 ## Supported Services
@@ -52,7 +52,7 @@ All database providers that are compatible with SQLAlchemy can be implemented ve
 
 ## Usage
 
-It is strongly recommended to run the script via the Dockerfile.
+It is strongly recommended to run the script via the [Dockerfile](Dockerfile).
 
 ### Environment Setup
 
@@ -70,7 +70,8 @@ It is strongly recommended to run the script via the Dockerfile.
 
 ### Auto Download of Artists
 
-To enable the automatic download of artists a reoccurring job needs to be run that calls the "auto_download_artist.py" 
+To enable the automatic download of artists a reoccurring job needs to be run that calls 
+the ["auto_download_artist.py"](src/auto_download_artists.py) 
 script. The same environment setup as for the regular web service is necessary for this.
 
 ## Releases
