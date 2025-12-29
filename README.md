@@ -70,7 +70,7 @@ Example .env file.
 
 ```dotenv
 # Database Configuration
-DB_URL=localhost
+DB_HOST=localhost
 DB_PORT=3306
 DB_DATABASE=music_db
 DB_USER=admin

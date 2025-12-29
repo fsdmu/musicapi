@@ -10,7 +10,7 @@ def db():
     mock_env = {
         "DB_USER": "test",
         "DB_PASSWORD": "test",
-        "DB_URL": "localhost",
+        "DB_HOST": "localhost",
         "DB_PORT": "3306",
         "DB_DATABASE": "test",
     }
@@ -138,7 +138,7 @@ def test_get_engine(mock_create_engine, driver):
     mock_env = {
         "DB_USER": user,
         "DB_PASSWORD": pw,
-        "DB_URL": url,
+        "DB_HOST": url,
         "DB_PORT": port,
         "DB_DATABASE": db,
         "DB_DRIVER": driver,

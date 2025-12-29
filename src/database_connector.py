@@ -239,7 +239,7 @@ class DatabaseConnector:
         """
         user = os.environ["DB_USER"]
         password = os.environ["DB_PASSWORD"]
-        url = os.environ["DB_URL"]
+        url = os.environ["DB_HOST"]
         port = os.environ["DB_PORT"]
         database = os.environ["DB_DATABASE"]
         driver = os.environ.get("DB_DRIVER", "mysql+mysqlconnector")
