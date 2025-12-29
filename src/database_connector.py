@@ -242,6 +242,8 @@ class DatabaseConnector:
         url = os.environ["DB_URL"]
         port = os.environ["DB_PORT"]
         database = os.environ["DB_DATABASE"]
+        driver = os.environ.get("DB_DRIVER", "mysql+mysqlconnector")
+
         return sa.create_engine(
-            f"mysql+mysqlconnector://{user}:{password}@{url}:{port}/{database}"
+            f"{driver}://{user}:{password}@{url}:{port}/{database}"
         )
