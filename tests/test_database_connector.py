@@ -130,16 +130,18 @@ def test_add_song(db):
     assert db.get_song(url2) is None
 
 
+@pytest.mark.parametrize("driver", [None, "postgres"])
 @patch("sqlalchemy.create_engine")
-def test_get_engine(mock_create_engine):
-    # Setup test data
+def test_get_engine(mock_create_engine, driver):
     user, pw, url, port, db = "User1", "Pass1", "Url1", "Port1", "Db1"
+    driver = driver if driver else "mysql+mysqlconnector"
     mock_env = {
         "DB_USER": user,
         "DB_PASSWORD": pw,
         "DB_URL": url,
         "DB_PORT": port,
         "DB_DATABASE": db,
+        "DB_DRIVER": driver,
     }
 
     mock_engine_instance = MagicMock()
@@ -150,5 +152,5 @@ def test_get_engine(mock_create_engine):
 
     assert result == mock_engine_instance
 
-    expected_conn_str = f"mysql+mysqlconnector://{user}:{pw}@{url}:{port}/{db}"
+    expected_conn_str = f"{driver}://{user}:{pw}@{url}:{port}/{db}"
     mock_create_engine.assert_called_once_with(expected_conn_str)
