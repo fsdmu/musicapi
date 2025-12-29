@@ -5,7 +5,7 @@ store the url to the downloaded songs and albums in a database,
 thus preventing them from being downloaded multiple times.
 You can also download all albums and eps of an artist by  providing the link to that artist. 
 When toggling download future albums of an artist all future albums of that  artist will be downloaded as well.
-To enable this feature you have to run a reoccurring job on the machine that calls the "auto_download_artist.py" 
+To enable this feature you have to run a recurring job on the machine that calls the "auto_download_artist.py" 
 script periodically. 
 
 The exact behavior could differ by handler to handler.
@@ -25,52 +25,65 @@ These are the lists of currently supported Services.
 - [MeTube](https://github.com/alexta69/metube)
 
 
-### Database Connections
+### Database Setup
 
-All database providers that are compatible with SQLAlchemy can be implemented very easily without any issues.
+All database providers that are compatible with SQLAlchemy are supported. 
+By default, it connects to a [MySQL](https://www.mysql.com/) database. 
+This can be changed via the 'DB_DRIVER' environment variable. 
+Refer to the official 
+[SQLAlchemy](https://docs.sqlalchemy.org/en/14/core/engines.html) documentation.
 
-#### [MySQL](https://www.mysql.com/)
+#### Table Setup
+
+**Artist table** with name 'artist'.
+
+| Column        | Type    | Constraints                 | Default |
+|---------------|---------|-----------------------------|---------|
+| id            | Integer | Primary Key, Auto Increment | -       |
+| url           | Varchar | Unique, Not Null            | -       |
+| auto_download | Boolean | Not Null                    | False   |
 
 
-**Database Setup**
+**Album table** with name 'album'.
 
-- Artist table
-  - 'artist' as tablename
-  - 'id' Column as an Integer primary key with auto increment
-  - 'url' Column as Varchar and a Unique constraint
-  - 'auto_download' as Boolean which defaults to false
+| Column        | Type    | Constraints                 | Default |
+|---------------|---------|-----------------------------|---------|
+| id            | Integer | Primary Key, Auto Increment | -       |
+| url           | Varchar | Unique, Not Null            | -       |
 
-- Album table
-  - 'album' as tablename
-  - 'id' Column as an Integer primary key with auto increment
-  - 'url' Column as Varchar and a Unique constraint
 
-- Song table
-  - 'song' as tablename
-  - 'id' Column as an Integer primary key with auto increment
-  - 'url' Column as Varchar and a Unique constraint
+**Song table** with name 'song'.
+
+| Column        | Type    | Constraints                 | Default |
+|---------------|---------|-----------------------------|---------|
+| id            | Integer | Primary Key, Auto Increment | -       |
+| url           | Varchar | Unique, Not Null            | -       |
+
 
 ## Usage
 
-It is strongly recommended to run the script via the [Dockerfile](Dockerfile).
+It is strongly recommended to run the script using the provided [Dockerfile](Dockerfile).
 
 ### Environment Setup
 
-- Database information
-  - "DB_URL"
-  - "DB_PORT"
-  - "DB_DATABASE"
-- Username and password for an account with 'SELECT', 'INSERT', 'UPDATE' and 
-    'DELETE' permissions 
-    - "DB_USER"
-    - "DB_PASSWORD"
-- MeTube information
-  - "ME_TUBE_API_URL"
+Example .env file.
 
+```dotenv
+# Database Configuration
+DB_URL=localhost
+DB_PORT=3306
+DB_DATABASE=music_db
+DB_USER=admin
+DB_PASSWORD=securepassword
+DB_DRIVER=mysql+mysqlconnector
+
+# Handler Configuration
+ME_TUBE_API_URL=http://metube:8081
+```
 
 ### Auto Download of Artists
 
-To enable the automatic download of artists a reoccurring job needs to be run that calls 
+To enable the automatic download of artists a recurring job needs to be run that calls 
 the ["auto_download_artist.py"](src/auto_download_artists.py) 
 script. The same environment setup as for the regular web service is necessary for this.
 
@@ -82,6 +95,7 @@ script. The same environment setup as for the regular web service is necessary f
 - Remove developer option for adding artist without download
 - Add option to select different audio formats
 - Update Table names for albums and songs
+- Add option to switch driver to a Database using an environment variable
 - Bugfixes
 - Update Documentation
 
