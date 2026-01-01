@@ -19,8 +19,9 @@ class SettingsDrawer:
                     label="Select download format",
                     value="mp3",
                 )
-                .props("dark color=pink-4")
+                .props("dark")
                 .classes("w-full")
+                .style("--q-primary: #CB69C1;")
             )
 
     def toggle(self):
@@ -40,16 +41,16 @@ class HelpDialog:
                 with ui.element("div").classes("text-[#EEEDF0]"):
                     ui.markdown(
                         """
-                        - **Paste URL:** YouTube Artist or Album link.
-                        - **Auto Download:** Tracks future releases.
-                        - **Settings:** Click the code icon for formats.
+                        - **Paste URL:** YouTube Artist, Album/EP/Playlist or Song link.
+                        - **Auto Download:** Tracks future Album/EP releases.
+                        - **Settings:** Click the code icon for additional options.
                     """
                     )
 
                 with ui.row().classes("w-full justify-end mt-4"):
                     ui.button("Close", on_click=self.dialog.close).props(
                         "flat"
-                    ).classes("text-[#EEEDF0]")
+                    ).classes("text-[#EEEDF0]").style("--q-primary: #CB69C1;")
 
     def open(self):
         """Open the help dialog."""
