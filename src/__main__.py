@@ -50,13 +50,13 @@ class MusicApiApp:
 
             self.auto_dl = (
                 ui.switch("Auto Download artists' future albums", value=False)
-                .props("color=pink-4")
+                .props("color=#CB69C1")
                 .classes("mt-2")
             )
 
-            ui.button("Submit", on_click=self.handle_click).classes(
-                "pink-btn w-full h-[50px] font-bold text-lg mt-4"
-            )
+            ui.button("Submit", on_click=self.handle_click).props(
+                "color=#CB69C1"
+            ).classes("pink-btn w-full h-[50px] font-bold text-lg mt-4")
 
     async def handle_click(self):
         """Handle a download submission."""
