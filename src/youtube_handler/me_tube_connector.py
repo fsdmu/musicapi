@@ -176,4 +176,5 @@ class MeTubeConnector:
             return None
 
         logger.info(f"Successfully queued download for URL: {single_url}")
+        logger.info(f"Response: {str(response.text)}")
         return response
