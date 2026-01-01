@@ -34,7 +34,7 @@ class MusicApiApp:
     def build_main_content(self):
         """Build the main content for the MusicAPI user interface."""
         with ui.column().classes(
-                "w-full max-w-xl mx-auto items-center p-8 gap-4 mt-12"
+            "w-full max-w-xl mx-auto items-center p-8 gap-4 mt-12"
         ):
             ui.label("MusicAPI").classes("text-3xl font-bold mb-4 text-[#CB69C1]")
 
@@ -44,7 +44,7 @@ class MusicApiApp:
                 )
                 self.url_input = (
                     ui.input(placeholder="https://youtube.com/...")
-                    .props('outlined dark color=pink-4')
+                    .props("outlined dark color=pink-4")
                     .classes("w-full")
                 )
 
@@ -65,7 +65,7 @@ class MusicApiApp:
         )
 
 
-@ui.page('/')
+@ui.page("/")
 def main_page():
     MusicApiApp()
 

@@ -19,7 +19,7 @@ class SettingsDrawer:
                     label="Select download format",
                     value="mp3",
                 )
-                .props("dark standout color=pink-4")
+                .props("dark color=pink-4")
                 .classes("w-full")
             )
 
