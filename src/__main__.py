@@ -1,125 +1,65 @@
-"""Web UI for adding YouTube albums and artists to MeTube."""
-
+"""User interface for the MusicAPi."""
 import logging
 import src.logging_config  # noqa: F401
 from nicegui import ui
-from src.url_handler import UrlHandler
+
+from src.ui.theme import apply_theme
+from src.ui.components import SettingsDrawer, HelpDialog
+from src.ui.logic import process_submission
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# --- THEME STYLING ---
-ui.add_head_html('''
-    <style>
-        body { background-color: #17181F; color: #EEEDF0; }
-        .q-drawer { background-color: #1E1F29 !important; color: #EEEDF0 !important; }
-        .q-card { background-color: #1E1F29 !important
-        ; color: #EEEDF0 !important; border: 1px solid #333; }
-        .q-field__label, .q-field__native, .q-field__prefix, .q-field__suffix
-        , .q-field__input {
-            color: #EEEDF0 !important;
-        }
-    </style>
-''')
 
-# --- SIDEBAR (Right Drawer) ---
-with ui.right_drawer(
-        top_corner=True, value=False
-).style("background-color: #1E1F29; border-left: 1px solid #333") as right_drawer:
-    ui.label("Settings").classes("text-xl mb-4")
-    audio_format = ui.select(
-        ["mp3", "wav", "flac", "m4a"], label="Select download format", value="mp3"
-    ).props('dark standout color=pink-4').classes("w-full")
+class MusicApiApp:
+    """Class for the MusicAPI user interface."""
 
-# --- DIALOGS ---
-with ui.dialog() as help_dialog:
-    with ui.card().classes("w-96"):
-        ui.label("How to use MeTube Adder").classes("text-h6 text-[#CB69C1]")
-        ui.markdown(
-            """
-        - **Paste URL:** Put a YouTube Artist or Album link in the box.
-        - **Auto Download:** If on, future albums by this artist are tracked.
-        - **Settings:** Click the code icon (top-right) for audio formats.
-        - **Submit:** Adds the content to your MeTube instance.
-        """
-        )
-        ui.button(
-            "Close", on_click=help_dialog.close
-        ).props('flat').classes("ml-auto text-[#EEEDF0]")
+    def __init__(self):
+        """Initialize the MusicApiApp."""
+        apply_theme()
 
-# --- HEADER BUTTONS ---
-with ui.row().classes("absolute top-2 right-2 items-center"):
-    ui.button(
-        icon="help", on_click=help_dialog.open
-    ).props("round flat").classes("text-[#EEEDF0]")
-    ui.button(
-        icon="code", on_click=lambda: right_drawer.toggle()
-    ).props("round flat").classes("text-[#EEEDF0]")
+        self.settings = SettingsDrawer()
+        self.help = HelpDialog()
 
-# --- MAIN UI CONTENT ---
-with ui.column().classes('w-full max-w-xl mx-auto items-center p-8 gap-4 mt-12'):
-    ui.label("MeTube Album Adder").classes("text-3xl font-bold mb-4 text-[#CB69C1]")
+        self.build_header()
+        self.build_main_content()
 
-    with ui.column().classes('w-full gap-1'):
-        ui.label("Enter YouTube URL here:").classes(
-            "text-xs uppercase tracking-wider opacity-70 ml-1")
-        url_input = ui.input(placeholder="https://youtube.com/...") \
-            .props('outlined dark color=pink-4') \
-            .classes('w-full') \
-            .style('color: #EEEDF0 !important;')
+    def build_header(self):
+        """Build the header for the MusicAPI user interface."""
+        with ui.row().classes("absolute top-2 right-2 items-center"):
+            ui.button(icon="help", on_click=self.help.open).props("round flat")
+            ui.button(icon="code", on_click=self.settings.toggle).props("round flat")
 
-    auto_download_toggle = ui.switch(
-        "Auto Download artists' future albums", value=False
-    ).props('color=pink-4').classes('text-[#EEEDF0] mt-2')
+    def build_main_content(self):
+        """Build the main content for the MusicAPI user interface."""
+        with ui.column().classes("w-full max-w-xl mx-auto items-center p-8 gap-4 mt-12"):
+            ui.label("MusicAPI").classes("text-3xl font-bold mb-4 text-[#CB69C1]")
 
-    # SUBMIT BUTTON
-    ui.button("Submit", on_click=lambda: on_submit()) \
-        .style(
-        'background-color: #CB69C1 !important; color: #EEEDF0 '
-        '!important; width: 100%; height: 50px; '
-        'font-weight: bold; font-size: 1.1em; margin-top: 10px;'
-    )
+            with ui.column().classes("w-full gap-1"):
+                ui.label("Enter YouTube URL:").classes("text-xs uppercase opacity-70 ml-1")
+                self.url_input = ui.input(placeholder="https://youtube.com/...") \
+                    .props('outlined dark color=pink-4') \
+                    .classes("w-full")
 
+            self.auto_dl = ui.switch("Auto Download artists' future albums", value=False) \
+                .props("color=pink-4").classes("mt-2")
 
-async def on_submit():
-    """Handle the submission of a YouTube URL."""
-    try:
-        url = str(url_input.value).strip()
-        if not url:
-            ui.notify("Please enter a YouTube URL", color="negative")
-            return
+            ui.button("Submit", on_click=self.handle_click) \
+                .classes("pink-btn w-full h-[50px] font-bold text-lg mt-4")
 
-        handler = UrlHandler.get_handler(url)
-        warning = handler.get_warning(url)
-
-        if warning:
-            with ui.dialog() as dialog, ui.card():
-                ui.label(warning + "\nDo you want to continue?")
-                with ui.row().classes('w-full justify-end'):
-                    ui.button(
-                        "No", on_click=lambda: dialog.submit("No")
-                    ).props('flat').classes('text-[#EEEDF0]')
-                    ui.button(
-                        "Yes", on_click=lambda: dialog.submit("Yes")
-                    ).classes('bg-[#CB69C1] text-[#EEEDF0]')
-
-            result = await dialog
-            if result != "Yes":
-                return
-
-        handler.download(
-            url=url,
-            auto_download=auto_download_toggle.value,
-            add_without_download=False,
-            download_format=audio_format.value,
+    async def handle_click(self):
+        """Handle a download submission."""
+        await process_submission(
+            self.url_input,
+            self.auto_dl.value,
+            self.settings.audio_format.value
         )
 
-        ui.notify(f"Successfully added: {url}", color="positive")
-        url_input.value = ""
 
-    except Exception as e:
-        ui.notify(f"Error: {e}", color="negative")
-        return
+@ui.page('/')
+def main_page():
+    MusicApiApp()
 
 
-ui.run(host="0.0.0.0", port=8080)
+if __name__ in {"__main__", "__mp_main__"}:
+    ui.run(host="0.0.0.0", port=8080, title="MusicAPI")
