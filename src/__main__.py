@@ -1,4 +1,5 @@
 """User interface for the MusicAPi."""
+
 import logging
 import src.logging_config  # noqa: F401
 from nicegui import ui
@@ -32,27 +33,35 @@ class MusicApiApp:
 
     def build_main_content(self):
         """Build the main content for the MusicAPI user interface."""
-        with ui.column().classes("w-full max-w-xl mx-auto items-center p-8 gap-4 mt-12"):
+        with ui.column().classes(
+                "w-full max-w-xl mx-auto items-center p-8 gap-4 mt-12"
+        ):
             ui.label("MusicAPI").classes("text-3xl font-bold mb-4 text-[#CB69C1]")
 
             with ui.column().classes("w-full gap-1"):
-                ui.label("Enter YouTube URL:").classes("text-xs uppercase opacity-70 ml-1")
-                self.url_input = ui.input(placeholder="https://youtube.com/...") \
-                    .props('outlined dark color=pink-4') \
+                ui.label("Enter YouTube URL:").classes(
+                    "text-xs uppercase opacity-70 ml-1"
+                )
+                self.url_input = (
+                    ui.input(placeholder="https://youtube.com/...")
+                    .props('outlined dark color=pink-4')
                     .classes("w-full")
+                )
 
-            self.auto_dl = ui.switch("Auto Download artists' future albums", value=False) \
-                .props("color=pink-4").classes("mt-2")
+            self.auto_dl = (
+                ui.switch("Auto Download artists' future albums", value=False)
+                .props("color=pink-4")
+                .classes("mt-2")
+            )
 
-            ui.button("Submit", on_click=self.handle_click) \
-                .classes("pink-btn w-full h-[50px] font-bold text-lg mt-4")
+            ui.button("Submit", on_click=self.handle_click).classes(
+                "pink-btn w-full h-[50px] font-bold text-lg mt-4"
+            )
 
     async def handle_click(self):
         """Handle a download submission."""
         await process_submission(
-            self.url_input,
-            self.auto_dl.value,
-            self.settings.audio_format.value
+            self.url_input, self.auto_dl.value, self.settings.audio_format.value
         )
 
 
