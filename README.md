@@ -89,6 +89,11 @@ script. The same environment setup as for the regular web service is necessary f
 
 ## Releases
 
+### o.4.1
+
+- Improve ui design
+- Improve clean code for ui
+
 ### 0.4.0
 
 - Improve ui with help icon
