@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir -r /app/src/requirements.txt
 
 EXPOSE 8080
 
-CMD ["python", "/app/src/webui.py"]
+CMD ["python", "/app/src/__main__.py"]
