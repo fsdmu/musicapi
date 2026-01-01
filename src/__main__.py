@@ -67,6 +67,7 @@ class MusicApiApp:
 
 @ui.page("/")
 def main_page():
+    """Start user interface for the MusicAPi."""
     MusicApiApp()
 
 
