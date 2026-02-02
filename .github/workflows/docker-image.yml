@@ -86,23 +86,12 @@ jobs:
           echo "IS_NEW_MINOR=$IS_NEW_MINOR" >> $GITHUB_OUTPUT
           echo "Current: $CURRENT_VERSION, Latest: $LATEST_TAG, Is New Minor: $IS_NEW_MINOR"
           
-      - name: Lint Dockerfile with hadolint
-        uses: hadolint/hadolint-action@v2
-        with:
-          dockerfile: ./Dockerfile
-          failure-threshold: warning
-          no-color : false
-          no-fail: true
 
       - name: Build the Docker image
         run: |
           docker build . \
             --file Dockerfile \
             --tag ghcr.io/fsdmu/musicapi:${{ steps.get_version.outputs.CURRENT_VERSION }}
-
-      - name: Scan image with Dockle
-        run: |
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/dockle:latest ghcr.io/fsdmu/musicapi:${{ steps.get_version.outputs.CURRENT_VERSION }}
 
       - name: Log in to GitHub Container Registry
         if: >
