@@ -12,20 +12,22 @@ import src.logging_config  # noqa: F401
 
 from src.database_connector import DatabaseConnector
 from src.youtube_handler.youtube_album_fetcher import YoutubeAlbumFetcher
+from src.logging.event_logger import log_event
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("app.me_tube_connector")
 logger.setLevel(logging.INFO)
 
 
 class MeTubeConnector:
     """Connector for MeTube API."""
 
-    def __init__(self, base_url: Optional[str] = None) -> None:
+    def __init__(self, base_url: Optional[str] = None, session_id: Optional[str] = None) -> None:
         """Initialize MeTubeConnector.
 
         Args:
             base_url: Base URL for MeTube API. If None, will use the
                 ME_TUBE_API_URL environment variable.
+            session_id: Optional default session_id to attach to logged events.
 
         Raises:
             ValueError: If base_url is not provided and ME_TUBE_API_URL
@@ -39,13 +41,16 @@ class MeTubeConnector:
                 "or via the ME_TUBE_API_URL environment variable."
             )
         self.db_connector = DatabaseConnector()
+        self.default_session_id = session_id
 
+    @log_event("metube.queue_download")
     def queue_download(
         self,
         url: str | List[str],
         quality: str = "Best",
         download_format: str = "mp3",
         add_without_download: bool = False,
+        session_id: str | None = None,
     ) -> Optional[List[requests.Response]]:
         """Queue a download for the given URL(s).
 
@@ -55,12 +60,15 @@ class MeTubeConnector:
             download_format: Desired download_format of the download. Default is "mp3".
             add_without_download: If True, will add the URL to the
                 database without queuing a download.
+            session_id: Optional session ID for logging.
 
         Returns:
             A list of responses from the MeTube API if downloads were queued,
                 otherwise None.
 
         """
+        effective_session = session_id or self.default_session_id
+
         if type(url) is str:
             url = [url]
         responses = []
@@ -70,19 +78,21 @@ class MeTubeConnector:
                 quality,
                 download_format,
                 add_without_download,
+                session_id=effective_session,
             )
             if response is not None:
                 responses.append(response)
 
-        logger.info("Responses: %s", responses)
         return responses
 
+    @log_event("metube._download_url")
     def _download_url(
         self,
         single_url: str,
         quality: str,
         download_format: str,
         add_without_download: bool,
+        session_id: str | None = None,
     ) -> Optional[requests.Response]:
         """Download a single URL.
 
@@ -94,6 +104,7 @@ class MeTubeConnector:
             download_format: Desired download_format of the download.
             add_without_download: If True, will add the URL to the
                 database without queuing a download.
+            session_id: Optional session ID for logging.
 
         Returns:
             The response from the MeTube API if download was queued,
@@ -109,12 +120,10 @@ class MeTubeConnector:
         if is_playlist:
             album_result = self.db_connector.get_album(single_url)
             if album_result is not None:
-                logger.info(f"Album {single_url} already in database, skipping.")
                 return None
         elif is_song:
             song_result = self.db_connector.get_song(single_url)
             if song_result is not None:
-                logger.info(f"Song {single_url} already in database, skipping.")
                 return None
         else:
             raise ValueError(f"Unsupported URL format: {single_url}")
@@ -124,6 +133,7 @@ class MeTubeConnector:
                 single_url,
                 quality,
                 download_format,
+                session_id=session_id,
             )
         else:
             response = None
@@ -134,7 +144,7 @@ class MeTubeConnector:
 
             album_id = single_url.split("list=")[1].split("&")[0]
             self.db_connector.add_album(single_url)
-            song_urls = YoutubeAlbumFetcher.get_album_songs(album_id)
+            song_urls = YoutubeAlbumFetcher.get_album_songs(album_id, session_id=session_id)
             for song_url in song_urls:
                 self.db_connector.add_song(song_url)
         elif is_song:
@@ -142,11 +152,13 @@ class MeTubeConnector:
 
         return response
 
+    @log_event("metube._add_to_me_tube")
     def _add_to_me_tube(
         self,
         single_url: str,
         quality: str,
         download_format: str,
+        session_id: str | None = None,  # noqa
     ) -> Optional[requests.Response]:
         """Add URL to MeTube without database checks.
 
@@ -154,6 +166,7 @@ class MeTubeConnector:
             single_url: The YouTube URL to queue for download.
             quality: Desired quality of the download.
             download_format: Desired download_format of the download.
+            session_id: Optional session ID for logging.
 
         Returns:
             The response from the MeTube API if download was queued,
@@ -171,10 +184,5 @@ class MeTubeConnector:
             headers={"Content-Type": "application/json"},
         )
         if response.status_code != 200:
-            logger.error(f"Request failed with status code {response.status_code}")
-            logger.info(f"Response: {response.text}")
             return None
-
-        logger.info(f"Successfully queued download for URL: {single_url}")
-        logger.info(f"Response: {str(response.text)}")
         return response

@@ -237,11 +237,15 @@ class DatabaseConnector:
             A SQLAlchemy Engine instance.
 
         """
-        user = os.environ["DB_USER"]
-        password = os.environ["DB_PASSWORD"]
-        url = os.environ["DB_HOST"]
-        port = os.environ["DB_PORT"]
-        database = os.environ["DB_DATABASE"]
+        user = os.environ.get("DB_USER")
+        password = os.environ.get("DB_PASSWORD")
+        url = os.environ.get("DB_HOST")
+        port = os.environ.get("DB_PORT")
+        database = os.environ.get("DB_DATABASE")
         driver = os.environ.get("DB_DRIVER", "mysql+mysqlconnector")
 
+        if not all([user, password, url, port, database]):
+            raise EnvironmentError("Database environment variables are not fully set.")
+
         return sa.create_engine(f"{driver}://{user}:{password}@{url}:{port}/{database}")
+
