@@ -8,12 +8,14 @@ import pytest
 from src.youtube_handler.me_tube_connector import MeTubeConnector
 
 
-def dummy_download_url(single_url, quality, download_format, add_without_download):
+def dummy_download_url(
+    single_url, quality, download_format, add_without_download, session_id=None
+):
     """Dummy function to simulate downloading a URL without actual API calls."""
     return f"Queued {single_url} with quality {quality} and format {download_format}"
 
 
-def dummy_add_to_me_tube(single_url, quality, download_format):
+def dummy_add_to_me_tube(single_url, quality, download_format, session_id=None):
     """Dummy function to simulate adding a URL to MeTube without actual API calls."""
     return f"Queued {single_url} with quality {quality} and format {download_format}"
 
