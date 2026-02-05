@@ -85,6 +85,6 @@ def setup_logging(db_connector: LogDatabaseConnector | None = None) -> logging.L
 
 def stop_logging():
     """Stop the logging listener if it exists."""
-    global _listener  # noqa: F824
+    global _listener  # noqa
     if _listener:
         _listener.stop()
