@@ -1,18 +1,15 @@
 """Module for connecting to MeTube API and queuing downloads."""
 
 import json
+import logging
 import os
-from typing import List, Optional
 
 import requests
 
-import logging
-
 import src.logging_config  # noqa: F401
-
 from src.database_connector import DatabaseConnector
-from src.youtube_handler.youtube_album_fetcher import YoutubeAlbumFetcher
 from src.logging.event_logger import log_event
+from src.youtube_handler.youtube_album_fetcher import YoutubeAlbumFetcher
 
 logger = logging.getLogger("app.me_tube_connector")
 logger.setLevel(logging.INFO)
@@ -21,7 +18,9 @@ logger.setLevel(logging.INFO)
 class MeTubeConnector:
     """Connector for MeTube API."""
 
-    def __init__(self, base_url: Optional[str] = None, session_id: Optional[str] = None) -> None:
+    def __init__(
+        self, base_url: str | None = None, session_id: str | None = None
+    ) -> None:
         """Initialize MeTubeConnector.
 
         Args:
@@ -46,12 +45,12 @@ class MeTubeConnector:
     @log_event("metube.queue_download")
     def queue_download(
         self,
-        url: str | List[str],
+        url: str | list[str],
         quality: str = "Best",
         download_format: str = "mp3",
         add_without_download: bool = False,
         session_id: str | None = None,
-    ) -> Optional[List[requests.Response]]:
+    ) -> list[requests.Response] | None:
         """Queue a download for the given URL(s).
 
         Args:
@@ -93,7 +92,7 @@ class MeTubeConnector:
         download_format: str,
         add_without_download: bool,
         session_id: str | None = None,
-    ) -> Optional[requests.Response]:
+    ) -> requests.Response | None:
         """Download a single URL.
 
             This only supports individual song and playlist URLs.
@@ -144,7 +143,9 @@ class MeTubeConnector:
 
             album_id = single_url.split("list=")[1].split("&")[0]
             self.db_connector.add_album(single_url)
-            song_urls = YoutubeAlbumFetcher.get_album_songs(album_id, session_id=session_id)
+            song_urls = YoutubeAlbumFetcher.get_album_songs(
+                album_id, session_id=session_id
+            )
             for song_url in song_urls:
                 self.db_connector.add_song(song_url)
         elif is_song:
@@ -159,7 +160,7 @@ class MeTubeConnector:
         quality: str,
         download_format: str,
         session_id: str | None = None,  # noqa
-    ) -> Optional[requests.Response]:
+    ) -> requests.Response | None:
         """Add URL to MeTube without database checks.
 
         Args:

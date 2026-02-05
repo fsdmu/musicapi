@@ -1,3 +1,5 @@
+"""Unit tests for the YoutubeAlbumFetcher class."""
+
 from unittest.mock import patch
 
 import pytest

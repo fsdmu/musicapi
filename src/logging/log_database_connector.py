@@ -1,9 +1,10 @@
 """Database connector for managing PostgresSQL logging database."""
-import os
+
 import logging
+import os
 
 import sqlalchemy as sa
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 logger = logging.getLogger("app.log_db_connector")
 
@@ -41,26 +42,38 @@ class LogDatabaseConnector:
         Returns:
             A SQLAlchemy Engine instance.
 
+        Raises:
+            RuntimeError: If any required environment variables are missing or if the
+                password is not set.
+
         """
         from urllib.parse import quote_plus
 
         user = LogDatabaseConnector._sanitize_env_val(os.environ.get("LOG_DB_USER"))
-        password = LogDatabaseConnector._sanitize_env_val(os.environ.get("LOG_DB_PASSWORD"))
+        password = LogDatabaseConnector._sanitize_env_val(
+            os.environ.get("LOG_DB_PASSWORD")
+        )
         host = LogDatabaseConnector._sanitize_env_val(os.environ.get("LOG_DB_HOST"))
         port = LogDatabaseConnector._sanitize_env_val(os.environ.get("LOG_DB_PORT"))
         db_name = LogDatabaseConnector._sanitize_env_val(os.environ.get("LOG_DB_NAME"))
 
-        missing = [k for k, v in {
-            "LOG_DB_USER": user,
-            "LOG_DB_PASSWORD": password,
-            "LOG_DB_HOST": host,
-            "LOG_DB_PORT": port,
-            "LOG_DB_NAME": db_name,
-        }.items() if not v]
+        missing = [
+            k
+            for k, v in {
+                "LOG_DB_USER": user,
+                "LOG_DB_PASSWORD": password,
+                "LOG_DB_HOST": host,
+                "LOG_DB_PORT": port,
+                "LOG_DB_NAME": db_name,
+            }.items()
+            if not v
+        ]
 
         if missing:
-            raise EnvironmentError(f"Logging DB environment variables missing: {', '.join(missing)}")
+            raise RuntimeError(
+                f"Logging DB environment variables missing: {', '.join(missing)}"
+            )
 
-        password_quoted = quote_plus(password)
+        password_quoted = quote_plus(password)  # type: ignore
         url = f"postgresql://{user}:{password_quoted}@{host}:{port}/{db_name}"
         return sa.create_engine(url, pool_pre_ping=True)

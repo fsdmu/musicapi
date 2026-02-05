@@ -1,8 +1,9 @@
 """Module to fetch album and song information from YouTube Music."""
 
-from typing import Dict, Any, List
+from typing import Any
 
 from ytmusicapi import YTMusic
+
 from src.logging.event_logger import log_event
 
 ytmusic = YTMusic()
@@ -13,7 +14,7 @@ class YoutubeAlbumFetcher:
 
     @staticmethod
     @log_event("youtube.get_album_ids")
-    def get_album_ids(artist_url: str, session_id: str | None = None) -> List[str]:
+    def get_album_ids(artist_url: str, session_id: str | None = None) -> list[str]:
         """Fetch album URLs for a given YouTube Music artist channel URL.
 
         Args:
@@ -25,8 +26,12 @@ class YoutubeAlbumFetcher:
 
         """
         artist_id = YoutubeAlbumFetcher._get_id_by_url(artist_url)
-        artist_details = YoutubeAlbumFetcher._get_artist_details(artist_id, session_id=session_id)
-        album_ids = YoutubeAlbumFetcher._get_albums(artist_details, session_id=session_id)
+        artist_details = YoutubeAlbumFetcher._get_artist_details(
+            artist_id, session_id=session_id
+        )
+        album_ids = YoutubeAlbumFetcher._get_albums(
+            artist_details, session_id=session_id
+        )
         return [YoutubeAlbumFetcher._get_album_url(id) for id in album_ids]
 
     @staticmethod
@@ -62,7 +67,9 @@ class YoutubeAlbumFetcher:
 
     @staticmethod
     @log_event("youtube._get_albums")
-    def _get_albums(artist_details: dict, get_eps: bool = True, session_id: str | None = None) -> List[str]:
+    def _get_albums(
+        artist_details: dict, get_eps: bool = True, session_id: str | None = None
+    ) -> list[str]:
         """Extract album IDs from artist details.
 
         Args:
@@ -94,13 +101,17 @@ class YoutubeAlbumFetcher:
             album_ids.append(id)
 
         if get_eps:
-            album_ids.extend(YoutubeAlbumFetcher.get_eps(artist_details, session_id=session_id))
+            album_ids.extend(
+                YoutubeAlbumFetcher.get_eps(artist_details, session_id=session_id)
+            )
 
         return album_ids
 
     @staticmethod
     @log_event("youtube._get_artist_details")
-    def _get_artist_details(artist_id: str, session_id: str | None = None) -> Dict[str, Any]:
+    def _get_artist_details(
+        artist_id: str, session_id: str | None = None
+    ) -> dict[str, Any]:
         """Fetch artist details from YouTube Music by artist ID.
 
         Args:
@@ -114,7 +125,7 @@ class YoutubeAlbumFetcher:
 
     @staticmethod
     @log_event("youtube.get_album_songs")
-    def get_album_songs(playlist_id: str, session_id: str | None = None) -> List[str]:
+    def get_album_songs(playlist_id: str, session_id: str | None = None) -> list[str]:
         """Fetch song URLs from a YouTube Music playlist ID.
 
         Args:
@@ -133,15 +144,14 @@ class YoutubeAlbumFetcher:
             video_id = track.get("videoId")
             if video_id:
                 song_url = (
-                    f"https://music.youtube.com/watch?v={video_id}"
-                    f"&list={playlist_id}"
+                    f"https://music.youtube.com/watch?v={video_id}&list={playlist_id}"
                 )
                 songs.append(song_url)
         return songs
 
     @staticmethod
     @log_event("youtube.get_eps")
-    def get_eps(artist_details: Dict, session_id: str | None = None) -> List[str | Any]:
+    def get_eps(artist_details: dict, session_id: str | None = None) -> list[str | Any]:
         """Fetch EPs for a given artist ID from YouTube Music.
 
         Args:

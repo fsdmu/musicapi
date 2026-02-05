@@ -2,17 +2,17 @@
 
 import logging
 import uuid
+
+from nicegui import app, ui
 from starlette.requests import Request
 from starlette.responses import Response
 
+from src.logging.event_logger import log_event
 from src.logging.log_database_connector import LogDatabaseConnector
 from src.logging_config import setup_logging, stop_logging
-from nicegui import ui, app
-
-from src.ui.theme import apply_theme
-from src.ui.components import SettingsDrawer, HelpDialog
+from src.ui.components import HelpDialog, SettingsDrawer
 from src.ui.logic import process_submission
-from src.logging.event_logger import log_event
+from src.ui.theme import apply_theme
 
 logger = logging.getLogger("app.music_api_ui")
 logger.setLevel(logging.INFO)
@@ -43,25 +43,42 @@ class MusicApiApp:
             ui.button(icon="help", on_click=self.help.open).props("round flat")
             ui.button(icon="code", on_click=self.settings.toggle).props("round flat")
 
+    # noqa: D401
     def build_main_content(self):
         """Build the main content for the MusicAPI user interface."""
+
         @log_event("url.input.change")
         def _on_url_change(value: str, session_id: str | None = None):
             """Handler invoked on URL input changes; logged by decorator.
 
-            Returning a small dict makes it easier to inspect results in logs.
+            Args:
+                value: The current URL input value.
+                session_id: The session ID for logging context.
+
+            Returns:
+                A dict containing the processed value.
+
             """
             val = (str(value) or "").strip()
             return {"value": val}
 
         def _on_update(value):
+            """Handle URL input changes with throttling to avoid excessive logging.
+
+            Args:
+                value: The input component triggering the change.
+
+            """
             v = (str(value.value) or "").strip()
             global latest_url_value
 
             if len(v) <= THRESHOLD:
                 return
 
-            if latest_url_value in v and len(v.replace(latest_url_value, "")) <= THRESHOLD:
+            if (
+                latest_url_value in v
+                and len(v.replace(latest_url_value, "")) <= THRESHOLD
+            ):
                 return
             latest_url_value = v
             _on_url_change(v, session_id=self.session_id)
@@ -76,7 +93,9 @@ class MusicApiApp:
                     "text-xs uppercase opacity-70 ml-1"
                 )
                 self.url_input = (
-                    ui.input(placeholder="https://youtube.com/...", on_change=_on_update)
+                    ui.input(
+                        placeholder="https://youtube.com/...", on_change=_on_update
+                    )
                     .props("outlined dark color=pink-4")
                     .classes("w-full")
                 )
@@ -91,12 +110,18 @@ class MusicApiApp:
             ui.button(
                 "Submit",
                 on_click=lambda: self.handle_click(session_id=self.session_id),
-            ).props("color=#CB69C1").classes("pink-btn w-full h-[50px] font-bold text-lg mt-4")
-
+            ).props("color=#CB69C1").classes(
+                "pink-btn w-full h-[50px] font-bold text-lg mt-4"
+            )
 
     @log_event("submit.click")
     async def handle_click(self, session_id: str | None = None):
-        """Handle a download submission. session_id is passed to logging wrapper."""
+        """Handle a download submission. session_id is passed to logging wrapper.
+
+        Args:
+            session_id: The session ID for logging context.
+
+        """
         await process_submission(
             self.url_input,
             self.auto_dl.value,
@@ -106,11 +131,20 @@ class MusicApiApp:
 
 
 @log_event("page.view")
-def _log_page_view(session_id: str | None, client_ip: str | None, user_agent: str, created: bool):
+def _log_page_view(
+    session_id: str | None, client_ip: str | None, user_agent: str, created: bool
+):
     """Emit a structured page.view event via the log_event wrapper.
 
-    The decorator will produce start/end entries; returning a payload makes it
-    included in the event meta.
+    Args:
+        session_id: The session ID for logging context.
+        client_ip: The client's IP address.
+        user_agent: The client's user agent string.
+        created: Whether the session was newly created.
+
+    Returns:
+        A dict containing client and session information.
+
     """
     return {
         "client": {"ip": client_ip, "user_agent": user_agent},
@@ -132,8 +166,13 @@ def main_page(request: Request, response: Response) -> None:
     created = False
     if not session_id:
         session_id = str(uuid.uuid4())
-        # HttpOnly, secure flag left to deployment; Lax same-site is a reasonable default
-        response.set_cookie("session_id", session_id, httponly=True, samesite="lax", max_age=30 * 24 * 3600)
+        response.set_cookie(
+            "session_id",
+            session_id,
+            httponly=True,
+            samesite="lax",
+            max_age=400 * 24 * 3600,
+        )
         created = True
 
     try:
@@ -142,11 +181,15 @@ def main_page(request: Request, response: Response) -> None:
         client_ip = None
     user_agent = request.headers.get("user-agent", "")
 
-    # Use the logging wrapper instead of manual logger.info
-    _log_page_view(session_id=session_id, client_ip=client_ip, user_agent=user_agent, created=created)
+    _log_page_view(
+        session_id=session_id,
+        client_ip=client_ip,
+        user_agent=user_agent,
+        created=created,
+    )
 
-    # Build the UI, pass session_id for handlers to use
     MusicApiApp(session_id=session_id)
+
 
 app.on_shutdown(stop_logging)
 

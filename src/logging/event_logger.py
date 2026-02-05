@@ -1,20 +1,25 @@
-import logging
+"""Utility functions and decorators for logging with sensitive data handling."""
+
 import functools
-import os
-import uuid
 import inspect
-from typing import Callable, Any, Dict, Tuple
+import logging
+import os
+import time
+import uuid
+from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger("app.event")
-_SENSITIVE_INDICATORS = {'pass', 'secret', 'token', 'key', 'credential', 'auth', 'pwd'}
+_SENSITIVE_INDICATORS = {"pass", "secret", "token", "key", "credential", "auth", "pwd"}
 _REDACT_VALUES = {
-    v for k, v in os.environ.items()
+    v
+    for k, v in os.environ.items()
     if any(ind in k.lower() for ind in _SENSITIVE_INDICATORS) and isinstance(v, str)
 }
 
 
 def _mask_value(val: Any) -> str:
-    """Generic mask used for sensitive values."""
+    """Generic Mask used for sensitive values."""  # ignore: D401
     try:
         s = str(val)
         if len(s) <= 6:
@@ -24,8 +29,8 @@ def _mask_value(val: Any) -> str:
         return "***REDACTED***"
 
 
-def _clean_args(func: Callable, args: Tuple[Any, ...]) -> Dict[str, Any]:
-    """Cleans function arguments for logging by removing non-serializable and sensitive data.
+def _clean_args(func: Callable, args: tuple[Any, ...]) -> dict[str, Any]:
+    """Clean function arguments for logging.
 
     Args:
         func: The function whose arguments are being cleaned.
@@ -35,14 +40,12 @@ def _clean_args(func: Callable, args: Tuple[Any, ...]) -> Dict[str, Any]:
         A dictionary of cleaned arguments suitable for logging.
 
     """
-
-
     sig = inspect.signature(func)
     params = list(sig.parameters.keys())
 
     clean_dict = {}
     for i, arg in enumerate(args):
-        if i < len(params) and params[i] in ('self', 'cls'):
+        if i < len(params) and params[i] in ("self", "cls"):
             continue
 
         if isinstance(arg, (str, int, float, bool, list, dict)) or arg is None:
@@ -50,6 +53,7 @@ def _clean_args(func: Callable, args: Tuple[Any, ...]) -> Dict[str, Any]:
             clean_dict[name] = arg
 
     return clean_dict
+
 
 def generate_session_id() -> str:
     """Generate a unique trace ID using UUID4.
@@ -62,10 +66,8 @@ def generate_session_id() -> str:
 
 
 def _make_meta(
-        event_type: str,
-        name: str,
-        payload: Dict[str, Any] | None = None
-) -> Dict[str, str | Dict]:
+    event_type: str, name: str, payload: dict[str, Any] | None = None
+) -> dict[str, str | dict]:
     """Create structured meta information for logging.
 
     Args:
@@ -95,7 +97,7 @@ def _redact(value: str) -> str:
 
 
 def _safe_serialize(obj: Any) -> Any:
-    """Safely serialize an object for logging by handling common types and redacting sensitive info.
+    """Safely serializes an object and redacts sensitive information.
 
     Args:
         obj: The object to serialize.
@@ -125,7 +127,7 @@ def _safe_serialize(obj: Any) -> Any:
         return out
 
     if isinstance(obj, (list, tuple, set)):
-        return [ _safe_serialize(x) for x in obj ]
+        return [_safe_serialize(x) for x in obj]
 
     try:
         return repr(obj)
@@ -134,10 +136,8 @@ def _safe_serialize(obj: Any) -> Any:
 
 
 def _get_clean_params(
-        func: Callable,
-        args: Tuple[Any, ...],
-        kwargs: Dict[str, Any]
-) -> Dict[str, Any]:
+    func: Callable, args: tuple[Any, ...], kwargs: dict[str, Any]
+) -> dict[str, Any]:
     """Extract and clean function parameters for logging.
 
     Args:
@@ -155,16 +155,14 @@ def _get_clean_params(
         bound_args.apply_defaults()
         params = dict(bound_args.arguments)
 
-        params.pop('self', None)
-        params.pop('cls', None)
+        params.pop("self", None)
+        params.pop("cls", None)
         return params
     except Exception:
         return {"error": "Could not bind arguments"}
 
 
-import time
-
-
+# noqa: D401
 def log_event(event_name: str = "event") -> Callable:
     """Decorator to log the start, end, and errors of a function execution.
 
@@ -175,8 +173,10 @@ def log_event(event_name: str = "event") -> Callable:
         A decorator that wraps the target function for logging.
 
     """
+
+    # noqa: D401
     def decorator(func: Callable) -> Callable:
-        """The actual decorator function.
+        """The decorator function.
 
         Args:
             func: The function to be decorated.
@@ -185,6 +185,7 @@ def log_event(event_name: str = "event") -> Callable:
             The wrapped function with logging.
 
         """
+
         def _get_common_data(args, kwargs):
             """Extract common data like session_id and cleaned parameters.
 
@@ -201,6 +202,7 @@ def log_event(event_name: str = "event") -> Callable:
             return session_id, params
 
         if inspect.iscoroutinefunction(func):
+
             @functools.wraps(func)
             async def async_wrapper(*args, **kwargs) -> Any:
                 """Async wrapper for logging function execution.
@@ -219,12 +221,9 @@ def log_event(event_name: str = "event") -> Callable:
                 logger.info(
                     f"{event_name}.start",
                     extra={
-                        "meta": _make_meta(
-                            event_name,
-                            func.__qualname__, params
-                        ),
-                        "session_id": session_id
-                    }
+                        "meta": _make_meta(event_name, func.__qualname__, params),
+                        "session_id": session_id,
+                    },
                 )
                 try:
                     result = await func(*args, **kwargs)
@@ -235,23 +234,27 @@ def log_event(event_name: str = "event") -> Callable:
                             "meta": _make_meta(
                                 event_name,
                                 func.__qualname__,
-                                {"result": result,
-                                 "duration_sec": round(duration, 4)
-                                 }
+                                {"result": result, "duration_sec": round(duration, 4)},
                             ),
-                            "session_id": session_id
-                        }
+                            "session_id": session_id,
+                        },
                     )
                     return result
                 except Exception as e:
-                    logger.exception(f"{event_name}.error", extra={
-                        "meta": _make_meta(event_name, func.__qualname__, {"error": str(e)}),
-                        "session_id": session_id
-                    })
+                    logger.exception(
+                        f"{event_name}.error",
+                        extra={
+                            "meta": _make_meta(
+                                event_name, func.__qualname__, {"error": str(e)}
+                            ),
+                            "session_id": session_id,
+                        },
+                    )
                     raise
 
             return async_wrapper
         else:
+
             @functools.wraps(func)
             def sync_wrapper(*args, **kwargs) -> Any:
                 """Sync wrapper for logging function execution.
@@ -270,10 +273,9 @@ def log_event(event_name: str = "event") -> Callable:
                 logger.info(
                     f"{event_name}.start",
                     extra={
-                        "meta": _make_meta(event_name,
-                                           func.__qualname__, params),
-                        "session_id": session_id
-                    }
+                        "meta": _make_meta(event_name, func.__qualname__, params),
+                        "session_id": session_id,
+                    },
                 )
                 try:
                     result = func(*args, **kwargs)
@@ -283,26 +285,25 @@ def log_event(event_name: str = "event") -> Callable:
                         extra={
                             "meta": _make_meta(
                                 event_name,
-                                func.__qualname__,{
-                                    "result": result,
-                                    "duration_sec": round(duration, 4)
-                                }
-                                               ),
-                            "session_id": session_id
-                    }
+                                func.__qualname__,
+                                {"result": result, "duration_sec": round(duration, 4)},
+                            ),
+                            "session_id": session_id,
+                        },
                     )
                     return result
                 except Exception as e:
                     logger.exception(
                         f"{event_name}.error",
                         extra={
-                            "meta": _make_meta(event_name, func.__qualname__, {"error": str(e)}),
-                            "session_id": session_id
-                        }
+                            "meta": _make_meta(
+                                event_name, func.__qualname__, {"error": str(e)}
+                            ),
+                            "session_id": session_id,
+                        },
                     )
                     raise
 
             return sync_wrapper
 
     return decorator
-

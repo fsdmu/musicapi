@@ -1,10 +1,10 @@
 """Automatically download albums from artists marked for auto-download."""
 
 import logging
-import src.logging_config  # initialize logging  # noqa: F401
 
-from src.youtube_handler.me_tube_connector import MeTubeConnector
+import src.logging_config  # initialize logging  # noqa: F401
 from src.database_connector import DatabaseConnector
+from src.youtube_handler.me_tube_connector import MeTubeConnector
 from src.youtube_handler.youtube_album_fetcher import YoutubeAlbumFetcher
 
 logger = logging.getLogger("app.auto_download_artists")
@@ -12,7 +12,7 @@ logger.setLevel(logging.INFO)
 
 
 def main():
-    """Automatically download albums from artists marked for auto-download."""
+    """Automatically downloads albums from artists marked for auto-download."""
     db = DatabaseConnector()
     mt = MeTubeConnector(base_url=None)
 

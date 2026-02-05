@@ -1,28 +1,67 @@
 """Handler for downloading music from YouTube."""
 
 import logging
-from typing import Optional
 
 import src.logging_config  # noqa: F401
-
 from src.database_connector import DatabaseConnector
 from src.download_handler_base import DownloadHandlerBase
+from src.logging.event_logger import log_event
 from src.youtube_handler.me_tube_connector import MeTubeConnector
 from src.youtube_handler.youtube_album_fetcher import YoutubeAlbumFetcher
-from src.logging.event_logger import log_event
 
 logger = logging.getLogger("app.yt_download_handler")
 logger.setLevel(logging.INFO)
 
 
 @log_event("youtube.album.added")
-def _log_added_album(album_url: str, database_album_id: int, channel_url: str, session_id: str | None = None):
-    return {"album_url": album_url, "database_album_id": database_album_id, "channel_url": channel_url}
+def _log_added_album(
+    album_url: str,
+    database_album_id: int,
+    channel_url: str,
+    session_id: str | None = None,
+) -> dict[str, str | int]:
+    """Log the addition of an album to the database.
+
+    Args:
+        album_url: The URL of the album that was added.
+        database_album_id: The ID of the album in the database.
+        channel_url: The URL of the channel the album belongs to.
+        session_id: Optional session ID to attach to the logged event.
+
+    Returns:
+        A dict containing the logged information about the added album.
+    """
+    return {
+        "album_url": album_url,
+        "database_album_id": database_album_id,
+        "channel_url": channel_url,
+    }
 
 
 @log_event("youtube.song.added")
-def _log_added_song(song_url: str, database_song_id: int, album_url: str | None, session_id: str | None = None):
-    return {"song_url": song_url, "database_song_id": database_song_id, "album_url": album_url}
+def _log_added_song(
+    song_url: str,
+    database_song_id: int,
+    album_url: str | None,
+    session_id: str | None = None,
+) -> dict[str, str | int | None]:
+    """Log the addition of a song to the database.
+
+    Args:
+        song_url: The URL of the song that was added.
+        database_song_id: The ID of the song in the database.
+        album_url: The URL of the album the song belongs to, if applicable.
+        session_id: Optional session ID to attach to the logged event.
+
+    Returns:
+        A dict containing the logged information about the added song.
+
+    """
+    return {
+        "song_url": song_url,
+        "database_song_id": database_song_id,
+        "album_url": album_url,
+    }
 
 
 class YoutubeDownloadHandler(DownloadHandlerBase):
@@ -100,12 +139,17 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
         Args:
             channel_url: The YouTube channel URL.
             auto_download: Whether to mark the artist for auto-download.
+            quality: The desired quality for the downloads.
+            download_format: The desired download_format for the downloads.
             add_without_download: If True, will add albums to the database
                 without queuing downloads. Default is False.
-            session_id is accepted and propagated to YoutubeAlbumFetcher and MeTubeConnector.
+            session_id: is accepted and propagated to YoutubeAlbumFetcher
+                and MeTubeConnector.
 
         """
-        album_urls = YoutubeAlbumFetcher.get_album_ids(channel_url, session_id=session_id)
+        album_urls = YoutubeAlbumFetcher.get_album_ids(
+            channel_url, session_id=session_id
+        )
         self.db_connector.add_artist(channel_url, auto_download=auto_download)
         for album_url in album_urls:
             try:
@@ -118,19 +162,47 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
                 )
 
             except Exception as e:
-                raise RuntimeError(f"Error queuing download for album {album_url}: {e}") from e
+                raise RuntimeError(
+                    f"Error queuing download for album {album_url}: {e}"
+                ) from e
 
             database_album_id = self.db_connector.add_album(album_url)
-            actual_id = database_album_id[0] if hasattr(database_album_id, '__getitem__') else database_album_id
+
+            if database_album_id is None:
+                logger.warning(
+                    f"Failed to add album {album_url} to database "
+                    f"for channel {channel_url}"
+                )
+                continue
+
+            actual_id = (
+                database_album_id[0]
+                if hasattr(database_album_id, "__getitem__")
+                else database_album_id
+            )
             _log_added_album(album_url, actual_id, channel_url, session_id=session_id)
 
-            songs = YoutubeAlbumFetcher.get_album_songs(album_url.split("list=")[1], session_id=session_id)
+            songs = YoutubeAlbumFetcher.get_album_songs(
+                album_url.split("list=")[1], session_id=session_id
+            )
             for song_url in songs:
                 database_song_id = self.db_connector.add_song(song_url)
-                actual_id = database_song_id[0] if hasattr(database_song_id, '__getitem__') else database_song_id
+
+                if database_song_id is None:
+                    logger.warning(
+                        f"Failed to add song {song_url} to database "
+                        f"for album {album_url}"
+                    )
+                    continue
+
+                actual_id = (
+                    database_song_id[0]
+                    if hasattr(database_song_id, "__getitem__")
+                    else database_song_id
+                )
                 _log_added_song(song_url, actual_id, album_url, session_id=session_id)
 
-    def get_warning(self, url: str) -> Optional[str]:
+    def get_warning(self, url: str) -> str | None:
         """Get a warning message for the given URL, if applicable.
 
         Args:

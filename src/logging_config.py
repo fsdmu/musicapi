@@ -1,9 +1,9 @@
 """Logging configuration for the music API project."""
-import queue
 
 import logging
 import os
-from logging.handlers import RotatingFileHandler, QueueListener, QueueHandler
+import queue
+from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
 
 from src.logging.log_database_connector import LogDatabaseConnector
 from src.logging.postgres_sql_handler import PostgresSQLHandler
@@ -13,9 +13,19 @@ os.makedirs(LOG_DIR, exist_ok=True)
 LOG_FILE = os.path.join(LOG_DIR, "musicapi.log")
 
 _listener: QueueListener | None = None
-log_queue = queue.Queue(-1)
+log_queue: queue.Queue = queue.Queue(-1)
 
-def setup_logging(db_connector: LogDatabaseConnector = None):
+
+def setup_logging(db_connector: LogDatabaseConnector | None = None) -> logging.Logger:
+    """Sets up logging configuration for the application.
+
+    Args:
+        db_connector: Optional LogDatabaseConnector instance for database logging.
+
+    Returns:
+        A configured logger instance for the application.
+
+    """
     global _listener
 
     root_logger = logging.getLogger()
@@ -31,7 +41,7 @@ def setup_logging(db_connector: LogDatabaseConnector = None):
         "sqlalchemy.engine",
         "starlette",
         "httpcore",
-        "httpx"
+        "httpx",
     ]
 
     for logger_name in quiet_loggers:
@@ -45,7 +55,9 @@ def setup_logging(db_connector: LogDatabaseConnector = None):
     app_logger.propagate = False
 
     # 1. Formatter
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(name)s - %(message)s")
+    formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    )
 
     # 2. File Handler
     if not any(isinstance(h, RotatingFileHandler) for h in app_logger.handlers):

@@ -1,10 +1,13 @@
 """Logic for MusicAPI user interface."""
 
 from nicegui import ui
+
 from src.url_handler import UrlHandler
 
 
-async def process_submission(url_input, auto_download, audio_format, session_id: str | None = None):
+async def process_submission(
+    url_input, auto_download, audio_format, session_id: str | None = None
+):
     """Logic for handling the URL submission."""
     try:
         url = str(url_input.value).strip()

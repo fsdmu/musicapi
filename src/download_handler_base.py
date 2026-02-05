@@ -1,14 +1,20 @@
 """Base class for download handlers."""
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 
 class DownloadHandlerBase(ABC):
     """Base class for download handlers."""
 
     @abstractmethod
-    def download(self, url: str, auto_download: bool, *args, session_id: str | None = None, **kwargs) -> None:
+    def download(
+        self,
+        url: str,
+        auto_download: bool,
+        *args,
+        session_id: str | None = None,
+        **kwargs,
+    ) -> None:
         """Download the content from the URL.
 
         This method should be overridden by subclasses.
@@ -24,7 +30,7 @@ class DownloadHandlerBase(ABC):
         raise NotImplementedError("Subclasses must implement this method.")
 
     @abstractmethod
-    def get_warning(self, url: str) -> Optional[str]:
+    def get_warning(self, url: str) -> str | None:
         """Get any warnings related to the URL.
 
         Args:

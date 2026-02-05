@@ -1,8 +1,8 @@
 """Module for handling URL-based download handlers."""
 
+from src.database_connector import DatabaseConnector
 from src.download_handler_base import DownloadHandlerBase
 from src.youtube_handler.youtube_download_handler import YoutubeDownloadHandler
-from src.database_connector import DatabaseConnector
 
 
 class UrlHandler:

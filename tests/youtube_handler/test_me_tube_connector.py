@@ -1,5 +1,7 @@
+"""Unit tests for the MeTubeConnector class in src.youtube_handler.me_tube_connector."""
+
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -7,10 +9,12 @@ from src.youtube_handler.me_tube_connector import MeTubeConnector
 
 
 def dummy_download_url(single_url, quality, download_format, add_without_download):
+    """Dummy function to simulate downloading a URL without actual API calls."""
     return f"Queued {single_url} with quality {quality} and format {download_format}"
 
 
 def dummy_add_to_me_tube(single_url, quality, download_format):
+    """Dummy function to simulate adding a URL to MeTube without actual API calls."""
     return f"Queued {single_url} with quality {quality} and format {download_format}"
 
 
@@ -66,7 +70,6 @@ def test_queue_download_single_url(mock_db_connector, mock_download_url):
 @patch("src.youtube_handler.me_tube_connector.DatabaseConnector")
 def test_queue_download_multiple_urls(mock_db_connector, mock_download_url):
     """Test queuing multiple download URLs."""
-
     urls = [
         "https://example.com/watch?v=video1",
         "https://example.com/watch?v=video2",
@@ -122,7 +125,6 @@ def test_download_url_single(mock_db_connector, mock_add_to_me_tube):
 @patch("src.youtube_handler.me_tube_connector.DatabaseConnector")
 def test_download_url_single_existing_song(mock_db_connector, mock_add_to_me_tube):
     """Test the _download_url method for an existing song URL."""
-
     mock_db_instance = MagicMock()
     mock_db_instance.get_song.return_value = {
         "id": 1,

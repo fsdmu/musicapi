@@ -1,10 +1,12 @@
+"""Unit tests for the UrlHandler class."""
+
 import pytest
 
 from src.url_handler import UrlHandler
 
 
 def test_get_handler_returns_youtube_handler(monkeypatch):
-    """Ensure youtube URLs return a YoutubeDownloadHandler instance."""
+    """Ensure YouTube URLs return a YoutubeDownloadHandler instance."""
 
     class DummyHandler:
         def __init__(self, db_connector):

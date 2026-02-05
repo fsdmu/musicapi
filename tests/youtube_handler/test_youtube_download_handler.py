@@ -1,3 +1,5 @@
+"""Unit tests for YoutubeDownloadHandler."""
+
 from unittest.mock import patch
 
 import pytest
@@ -191,6 +193,7 @@ def test_handle_channel_url_download_error(
 @patch("src.youtube_handler.youtube_download_handler.DatabaseConnector")
 @patch("src.youtube_handler.youtube_download_handler.MeTubeConnector")
 def test_get_warning(mock_me_tube_connector, mock_db_connector):
+    """Test get_warning returns a warning if no warning criteria is met."""
     url = "youtube.com/watch"
     handler = YoutubeDownloadHandler(db_connector=mock_db_connector)
 
@@ -202,6 +205,7 @@ def test_get_warning(mock_me_tube_connector, mock_db_connector):
 @patch("src.youtube_handler.youtube_download_handler.DatabaseConnector")
 @patch("src.youtube_handler.youtube_download_handler.MeTubeConnector")
 def test_get_warning_no_warning(mock_me_tube_connector, mock_db_connector):
+    """Test get_warning returns None if no warning criteria is met."""
     url = "music.youtube.com/watch"
     handler = YoutubeDownloadHandler(db_connector=mock_db_connector)
 
