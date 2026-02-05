@@ -236,6 +236,9 @@ class DatabaseConnector:
         Returns:
             A SQLAlchemy Engine instance.
 
+        Raises:
+            RuntimeError: If any required environment variables are missing.
+
         """
         user = os.environ.get("DB_USER")
         password = os.environ.get("DB_PASSWORD")
@@ -244,7 +247,9 @@ class DatabaseConnector:
         database = os.environ.get("DB_DATABASE")
         driver = os.environ.get("DB_DRIVER", "mysql+mysqlconnector")
 
-        if not all([user, password, url, port, database]):
-            raise OSError("Database environment variables are not fully set.")
+        all_vars = [user, password, url, port, database, driver]
+
+        if any(v in [None, ""] for v in all_vars):
+            raise RuntimeError("Database environment variables are not fully set.")
 
         return sa.create_engine(f"{driver}://{user}:{password}@{url}:{port}/{database}")

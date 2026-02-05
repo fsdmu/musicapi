@@ -148,12 +148,12 @@ def test_add_song(db):
 @patch("sqlalchemy.create_engine")
 def test_get_engine(mock_create_engine, driver):
     """Test the _get_engine method of DatabaseConnector with different drivers."""
-    user, pw, url, port, db = "User1", "Pass1", "Url1", "Port1", "Db1"
+    user, pw, host, port, db = "User1", "Pass1", "Url1", "Port1", "Db1"
     driver = driver if driver else "mysql+mysqlconnector"
     mock_env = {
         "DB_USER": user,
         "DB_PASSWORD": pw,
-        "DB_HOST": url,
+        "DB_HOST": host,
         "DB_PORT": port,
         "DB_DATABASE": db,
         "DB_DRIVER": driver,
@@ -167,5 +167,47 @@ def test_get_engine(mock_create_engine, driver):
 
     assert result == mock_engine_instance
 
-    expected_conn_str = f"{driver}://{user}:{pw}@{url}:{port}/{db}"
+    expected_conn_str = f"{driver}://{user}:{pw}@{host}:{port}/{db}"
     mock_create_engine.assert_called_once_with(expected_conn_str)
+
+
+@pytest.mark.parametrize(
+    "driver,user,pw,host,port,db",
+    [
+        ("postgres", None, "Pass1", "Url1", "Port1", "Db1"),
+        ("postgres", "User1", None, "Url1", "Port1", "Db1"),
+        ("postgres", "User1", "Pass1", None, "Port1", "Db1"),
+        ("postgres", "User1", "Pass1", "Url1", None, "Db1"),
+        ("postgres", "User1", "Pass1", "Url1", "Port1", None),
+        ("postgres", "", "Pass1", "Url1", "Port1", "Db1"),
+        ("postgres", "User1", "", "Url1", "Port1", "Db1"),
+        ("postgres", "User1", "Pass1", "", "Port1", "Db1"),
+        ("postgres", "User1", "Pass1", "Url1", "", "Db1"),
+        ("postgres", "User1", "Pass1", "Url1", "Port1", ""),
+    ],
+)
+@patch("sqlalchemy.create_engine")
+def test_get_engine_error(mock_create_engine, driver, user, pw, host, port, db):
+    """Test the _get_engine method of DatabaseConnector with different drivers."""
+    driver = driver if driver else "mysql+mysqlconnector"
+    mock_env = {}
+    if user is not None:
+        mock_env["DB_USER"] = user
+    if pw is not None:
+        mock_env["DB_PASSWORD"] = pw
+    if host is not None:
+        mock_env["DB_HOST"] = host
+    if port is not None:
+        mock_env["DB_PORT"] = port
+    if db is not None:
+        mock_env["DB_DATABASE"] = db
+    mock_env["DB_DRIVER"] = driver
+
+    mock_engine_instance = MagicMock()
+    mock_create_engine.return_value = mock_engine_instance
+
+    with patch.dict("os.environ", mock_env):
+        with pytest.raises(
+            RuntimeError, match="Database environment variables are not fully set."
+        ):
+            DatabaseConnector._get_engine()

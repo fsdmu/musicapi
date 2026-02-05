@@ -11,11 +11,23 @@ from typing import Any
 
 logger = logging.getLogger("app.event")
 _SENSITIVE_INDICATORS = {"pass", "secret", "token", "key", "credential", "auth", "pwd"}
-_REDACT_VALUES = {
-    v
-    for k, v in os.environ.items()
-    if any(ind in k.lower() for ind in _SENSITIVE_INDICATORS) and isinstance(v, str)
-}
+
+
+def _get_env_redact_values() -> set[str]:
+    """Extract sensitive environment variable values for redaction.
+
+    Returns:
+        A set of sensitive values from environment variables.
+
+    """
+    return set(
+        v
+        for k, v in os.environ.items()
+        if any(s.lower() in k.lower() for s in _SENSITIVE_INDICATORS)
+    )
+
+
+_REDACT_VALUES = _get_env_redact_values()
 
 
 def _mask_value(val: Any) -> str:
@@ -104,7 +116,6 @@ def _safe_serialize(obj: Any) -> Any:
 
     Returns:
         A serialized representation of the object suitable for logging.
-
     """
     if obj is None:
         return None
@@ -119,11 +130,12 @@ def _safe_serialize(obj: Any) -> Any:
             try:
                 key_str = str(k).lower()
             except Exception:
-                key_str = ""
+                key_str = f"unparseable_ref_{id(k)}"
+
             if any(ind in key_str for ind in _SENSITIVE_INDICATORS):
-                out[str(k)] = _mask_value(v)
+                out[key_str] = _mask_value(v)
             else:
-                out[str(k)] = _safe_serialize(v)
+                out[key_str] = _safe_serialize(v)
         return out
 
     if isinstance(obj, (list, tuple, set)):
