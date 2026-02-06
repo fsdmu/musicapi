@@ -37,7 +37,7 @@ class LogDatabaseConnector:
 
     @staticmethod
     def _get_engine() -> sa.Engine:
-        """Create and return a PostgreSQL SQLAlchemy engine using environment variables.
+        """Create and return a PostgresSQL SQLAlchemy engine using environment variables.
 
         Returns:
             A SQLAlchemy Engine instance.

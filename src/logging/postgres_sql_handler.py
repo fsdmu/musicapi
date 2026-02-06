@@ -1,4 +1,4 @@
-"""Custom logging handler to write logs to a PostgreSQL database using SQLAlchemy."""
+"""Custom logging handler to write logs to a PostgresSQL database using SQLAlchemy."""
 
 import logging
 
@@ -9,7 +9,7 @@ logger = logging.getLogger("app.postgres_sql_handler")
 
 
 class PostgresSQLHandler(logging.Handler):
-    """Logging handler to write log records to a PostgreSQL database."""
+    """Logging handler to write log records to a PostgresSQL database."""
 
     def __init__(self, connector: LogDatabaseConnector) -> None:
         """Initialize the PostgresSQLHandler.
@@ -22,7 +22,7 @@ class PostgresSQLHandler(logging.Handler):
         self.connector = connector
 
     def emit(self, record: logging.LogRecord) -> None:
-        """Emit a log record to the PostgreSQL database.
+        """Emit a log record to the PostgresSQL database.
 
         Args:
             record: The log record to be written to the database.

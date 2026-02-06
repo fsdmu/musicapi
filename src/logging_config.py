@@ -71,7 +71,7 @@ def setup_logging(db_connector: LogDatabaseConnector | None = None) -> logging.L
         console.setFormatter(formatter)
         app_logger.addHandler(console)
 
-    # 4. PostgreSQL Handler
+    # 4. PostgresSQL Handler
     if db_connector:
         db_handler = PostgresSQLHandler(db_connector)
         _listener = QueueListener(log_queue, db_handler)
