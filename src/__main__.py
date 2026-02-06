@@ -46,7 +46,6 @@ class MusicApiApp:
     # noqa: D401
     def build_main_content(self):
         """Build the main content for the MusicAPI user interface."""
-
         with ui.column().classes(
             "w-full max-w-xl mx-auto items-center p-8 gap-4 mt-12"
         ):
@@ -57,9 +56,7 @@ class MusicApiApp:
                     "text-xs uppercase opacity-70 ml-1"
                 )
                 self.url_input = (
-                    ui.input(
-                        placeholder="https://youtube.com/..."
-                    )
+                    ui.input(placeholder="https://youtube.com/...")
                     .props("outlined dark color=pink-4")
                     .classes("w-full")
                 )
@@ -95,9 +92,7 @@ class MusicApiApp:
 
 
 @log_event("page.view")
-def _log_page_view(
-    session_id: str | None, user_agent: str, created: bool
-):
+def _log_page_view(session_id: str | None, user_agent: str, created: bool):
     """Emit a structured page.view event via the log_event wrapper.
 
     Args:

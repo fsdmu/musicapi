@@ -43,7 +43,7 @@ class HelpDialog:
                         """
                         ### 📖 Usage Instructions
                         - **Paste URL:** YouTube Artist, Album/EP/Playlist or Song link.
-                        - **Auto Download:** Tracks future Album/EP releases 
+                        - **Auto Download:** Tracks future Album/EP releases
                             of the artist.
                         - **Settings:** Click the code icon for additional options.
 
@@ -67,7 +67,7 @@ class HelpDialog:
                         * **Disclaimer:** This is a private, free and
                             open-source project. Every privacy acknowledgement
                             by this application is made in good faith
-                            and best effort, but there are no guarantees. 
+                            and best effort, but there are no guarantees.
                             The code is verifiable under
                             [this link](https://github.com/fsdmu/musicapi).
                     """
