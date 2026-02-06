@@ -47,42 +47,6 @@ class MusicApiApp:
     def build_main_content(self):
         """Build the main content for the MusicAPI user interface."""
 
-        @log_event("url.input.change")
-        def _on_url_change(value: str, session_id: str | None = None):
-            """Handler invoked on URL input changes; logged by decorator.
-
-            Args:
-                value: The current URL input value.
-                session_id: The session ID for logging context.
-
-            Returns:
-                A dict containing the processed value.
-
-            """
-            val = (str(value) or "").strip()
-            return {"value": val}
-
-        def _on_update(value):
-            """Handle URL input changes with throttling to avoid excessive logging.
-
-            Args:
-                value: The input component triggering the change.
-
-            """
-            v = (str(value.value) or "").strip()
-            global latest_url_value
-
-            if len(v) <= THRESHOLD:
-                return
-
-            if (
-                latest_url_value in v
-                and len(v.replace(latest_url_value, "")) <= THRESHOLD
-            ):
-                return
-            latest_url_value = v
-            _on_url_change(v, session_id=self.session_id)
-
         with ui.column().classes(
             "w-full max-w-xl mx-auto items-center p-8 gap-4 mt-12"
         ):
@@ -94,7 +58,7 @@ class MusicApiApp:
                 )
                 self.url_input = (
                     ui.input(
-                        placeholder="https://youtube.com/...", on_change=_on_update
+                        placeholder="https://youtube.com/..."
                     )
                     .props("outlined dark color=pink-4")
                     .classes("w-full")
@@ -132,13 +96,12 @@ class MusicApiApp:
 
 @log_event("page.view")
 def _log_page_view(
-    session_id: str | None, client_ip: str | None, user_agent: str, created: bool
+    session_id: str | None, user_agent: str, created: bool
 ):
     """Emit a structured page.view event via the log_event wrapper.
 
     Args:
         session_id: The session ID for logging context.
-        client_ip: The client's IP address.
         user_agent: The client's user agent string.
         created: Whether the session was newly created.
 
@@ -147,7 +110,7 @@ def _log_page_view(
 
     """
     return {
-        "client": {"ip": client_ip, "user_agent": user_agent},
+        "client": {"user_agent": user_agent},
         "session": {"id": session_id, "created": created},
     }
 
@@ -175,15 +138,10 @@ def main_page(request: Request, response: Response) -> None:
         )
         created = True
 
-    try:
-        client_ip = request.client.host if request.client else None
-    except Exception:
-        client_ip = None
     user_agent = request.headers.get("user-agent", "")
 
     _log_page_view(
         session_id=session_id,
-        client_ip=client_ip,
         user_agent=user_agent,
         created=created,
     )
