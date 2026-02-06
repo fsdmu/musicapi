@@ -17,7 +17,7 @@ class SettingsDrawer:
                 ui.select(
                     ["mp3", "wav", "flac", "m4a"],
                     label="Select download format",
-                    value="mp3",
+                    value="flac",
                 )
                 .props("dark")
                 .classes("w-full")
@@ -41,34 +41,34 @@ class HelpDialog:
                 with ui.element("div").classes("text-[#EEEDF0]"):
                     ui.markdown(
                         """
-                        ### How to use
+                        ### 📖 Usage Instructions
                         - **Paste URL:** YouTube Artist, Album/EP/Playlist or Song link.
-                        - **Auto Download:** Tracks future Album/EP releases.
+                        - **Auto Download:** Tracks future Album/EP releases 
+                            of the artist.
                         - **Settings:** Click the code icon for additional options.
 
                         ---
 
                         ### 🔒 Logging Policy
-                        To ensure service stability and debug issues, we 
-                            log certain events:
+                        To ensure service stability certain events are logged:
 
-                        * **What we log:** Page views, button clicks, 
+                        * **What is logged:** Page views, button clicks,
                             any text in the url input field after you click 'submit'
-                            , Browser User-Agent, and function 
+                            , Browser User-Agent, and function
                             execution speeds.
                         * **No PII:** We do **not** log your IP address.
-                        * **Redaction:** Any sensitive data is **masked**. 
-                            Our system automatically scrubs values associated with 
+                        * **Redaction:** Any sensitive data is **masked**.
+                            Our system automatically scrubs values associated with
                             keys like `password`, `token`, `secret`, or `auth`.
-                        * **Session ID:** A temporary ID (cookie) groups logs to help 
+                        * **Session ID:** A temporary ID (cookie) groups logs to help
                             me fix bugs without tracking you across the web.
-                        * **Storage:** Logs are stored in a private PostgresSQL 
+                        * **Storage:** Logs are stored in a private PostgresSQL
                             database and are periodically deleted.
-                        * **Disclaimer:** This is a private, free and 
-                            open-source project. Every privacy acknowledgement 
-                            by this application is made in good faith 
+                        * **Disclaimer:** This is a private, free and
+                            open-source project. Every privacy acknowledgement
+                            by this application is made in good faith
                             and best effort, but there are no guarantees. 
-                            The code is verifiable under 
+                            The code is verifiable under
                             [this link](https://github.com/fsdmu/musicapi).
                     """
                     )

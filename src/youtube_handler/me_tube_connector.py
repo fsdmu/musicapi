@@ -47,7 +47,7 @@ class MeTubeConnector:
         self,
         url: str | list[str],
         quality: str = "Best",
-        download_format: str = "mp3",
+        download_format: str = "flac",
         add_without_download: bool = False,
         session_id: str | None = None,
     ) -> list[requests.Response] | None:
