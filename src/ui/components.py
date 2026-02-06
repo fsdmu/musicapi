@@ -35,15 +35,41 @@ class HelpDialog:
     def __init__(self):
         """Initialize the HelpDialog."""
         with ui.dialog() as self.dialog:
-            with ui.card().classes("w-96 bg-[#1E1F29] border border-[#333]"):
-                ui.label("How to use MeTube Adder").classes("text-h6 text-[#CB69C1]")
+            with ui.card().classes("w-[500px] bg-[#1E1F29] border border-[#333]"):
+                ui.label("Help & Privacy").classes("text-h6 text-[#CB69C1]")
 
                 with ui.element("div").classes("text-[#EEEDF0]"):
                     ui.markdown(
                         """
+                        ### How to use
                         - **Paste URL:** YouTube Artist, Album/EP/Playlist or Song link.
                         - **Auto Download:** Tracks future Album/EP releases.
                         - **Settings:** Click the code icon for additional options.
+
+                        ---
+
+                        ### 🔒 Logging Policy
+                        To ensure service stability and debug issues, we 
+                            log certain events:
+
+                        * **What we log:** Page views, button clicks, 
+                            any text in the url input field after you click 'submit'
+                            , Browser User-Agent, and function 
+                            execution speeds.
+                        * **No PII:** We do **not** log your IP address.
+                        * **Redaction:** Any sensitive data is **masked**. 
+                            Our system automatically scrubs values associated with 
+                            keys like `password`, `token`, `secret`, or `auth`.
+                        * **Session ID:** A temporary ID (cookie) groups logs to help 
+                            me fix bugs without tracking you across the web.
+                        * **Storage:** Logs are stored in a private PostgresSQL 
+                            database and are periodically deleted.
+                        * **Disclaimer:** This is a private, free and 
+                            open-source project. Every privacy acknowledgement 
+                            by this application is made in good faith 
+                            and best effort, but there are no guarantees. 
+                            The code is verifiable under 
+                            [this link](https://github.com/fsdmu/musicapi).
                     """
                     )
 
