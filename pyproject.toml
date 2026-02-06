@@ -67,6 +67,7 @@ dependencies = [
     "yarl>=1.22.0",
     "ytmusicapi>=1.11.4",
     "mysql-connector>=2.2.9",
+    "psycopg2-binary>=2.9.11",
 ]
 
 [tool.ruff]
