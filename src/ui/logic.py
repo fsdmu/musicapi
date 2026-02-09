@@ -1,10 +1,13 @@
 """Logic for MusicAPI user interface."""
 
 from nicegui import ui
+
 from src.url_handler import UrlHandler
 
 
-async def process_submission(url_input, auto_download, audio_format):
+async def process_submission(
+    url_input, auto_download, audio_format, session_id: str | None = None
+):
     """Logic for handling the URL submission."""
     try:
         url = str(url_input.value).strip()
@@ -24,6 +27,7 @@ async def process_submission(url_input, auto_download, audio_format):
             auto_download=auto_download,
             add_without_download=False,
             download_format=audio_format,
+            session_id=session_id,
         )
 
         ui.notify(f"Successfully added: {url}", color="positive")

@@ -1,3 +1,5 @@
+"""Unit tests for YoutubeDownloadHandler."""
+
 from unittest.mock import patch
 
 import pytest
@@ -41,10 +43,7 @@ def test_download_channel_url(
     )
 
     mock_handle_channel_url.assert_called_once_with(
-        url,
-        True,
-        quality=quality,
-        download_format=download_format,
+        url, True, quality=quality, download_format=download_format, session_id=None
     )
     assert not mock_me_tube_connector().queue_download.called
 
@@ -71,6 +70,7 @@ def test_download_playlist_url(
         quality="High",
         download_format="flac",
         add_without_download=False,
+        session_id=None,
     )
     assert not mock_handle_channel_url.called
 
@@ -128,11 +128,12 @@ def test_handle_channel_url(
         download_format=download_format,
     )
 
-    mock_youtube_album_fetcher.get_album_ids.assert_called_once_with(url)
+    mock_youtube_album_fetcher.get_album_ids.assert_called_once_with(
+        url, session_id=None
+    )
 
     mock_db_connector.add_artist.assert_called_once_with(
-        url,
-        auto_download=auto_download,
+        url, auto_download=auto_download
     )
 
     mock_me_tube_connector().queue_download.assert_called_once_with(
@@ -140,11 +141,14 @@ def test_handle_channel_url(
         quality=quality,
         download_format=download_format,
         add_without_download=False,
+        session_id=None,
     )
 
     mock_db_connector.add_album.assert_called_once_with(album_url)
 
-    mock_youtube_album_fetcher.get_album_songs.assert_called_once_with(album_id)
+    mock_youtube_album_fetcher.get_album_songs.assert_called_once_with(
+        album_id, session_id=None
+    )
     mock_db_connector.add_song.assert_called_once_with(song_url)
 
 
@@ -176,12 +180,14 @@ def test_handle_channel_url_download_error(
             auto_download=auto_download,
             quality=quality,
             download_format=download_format,
+            session_id=None,
         )
 
-    mock_youtube_album_fetcher.get_album_ids.assert_called_once_with(url)
+    mock_youtube_album_fetcher.get_album_ids.assert_called_once_with(
+        url, session_id=None
+    )
     mock_db_connector.add_artist.assert_called_once_with(
-        url,
-        auto_download=auto_download,
+        url, auto_download=auto_download
     )
 
     assert not mock_db_connector.add_album.called
@@ -191,6 +197,7 @@ def test_handle_channel_url_download_error(
 @patch("src.youtube_handler.youtube_download_handler.DatabaseConnector")
 @patch("src.youtube_handler.youtube_download_handler.MeTubeConnector")
 def test_get_warning(mock_me_tube_connector, mock_db_connector):
+    """Test get_warning returns a warning if no warning criteria is met."""
     url = "youtube.com/watch"
     handler = YoutubeDownloadHandler(db_connector=mock_db_connector)
 
@@ -202,6 +209,7 @@ def test_get_warning(mock_me_tube_connector, mock_db_connector):
 @patch("src.youtube_handler.youtube_download_handler.DatabaseConnector")
 @patch("src.youtube_handler.youtube_download_handler.MeTubeConnector")
 def test_get_warning_no_warning(mock_me_tube_connector, mock_db_connector):
+    """Test get_warning returns None if no warning criteria is met."""
     url = "music.youtube.com/watch"
     handler = YoutubeDownloadHandler(db_connector=mock_db_connector)
 

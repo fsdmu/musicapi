@@ -1,12 +1,16 @@
+"""Unit tests for DatabaseConnector class."""
+
+from unittest.mock import MagicMock, patch
+
 import pytest
 import sqlalchemy as sa
-from unittest.mock import patch, MagicMock
 
-from src.database_connector import DatabaseConnector, Base
+from src.database_connector import Base, DatabaseConnector
 
 
 @pytest.fixture
 def db():
+    """Fixture to set up an in-memory SQLite database for testing."""
     mock_env = {
         "DB_USER": "test",
         "DB_PASSWORD": "test",
@@ -31,6 +35,7 @@ def db():
 
 @pytest.mark.parametrize("auto_download", [True, False])
 def test_add_and_get_artist(db, auto_download):
+    """Test adding an artist and retrieving it from the database."""
     url = "https://example.com/artist/1"
     db.add_artist(url, auto_download=auto_download)
 
@@ -43,6 +48,7 @@ def test_add_and_get_artist(db, auto_download):
 
 
 def test_add_and_get_artist_id(db):
+    """Test adding an artist and retrieving its ID from the database."""
     url = "https://example.com/artist/1"
     db.add_artist(url, auto_download=True)
 
@@ -52,6 +58,7 @@ def test_add_and_get_artist_id(db):
 
 
 def test_song_yt_url_mapping_logic(db):
+    """Test adding a youtube.com URL and retrievingit with a music.youtube.com URL."""
     yt_url = "https://youtube.com/watch?v=abc"
     db.add_song(yt_url)
 
@@ -60,6 +67,7 @@ def test_song_yt_url_mapping_logic(db):
 
 
 def test_add_album_idempotency(db):
+    """Test that adding the same album URL multiple times returns the same ID."""
     url = "https://example.com/album/99"
     id1 = db.add_album(url)
     id2 = db.add_album(url)
@@ -68,6 +76,7 @@ def test_add_album_idempotency(db):
 
 
 def test_add_get_album(db):
+    """Test adding an album URL to the database and retrieving it."""
     url = "https://example.com/album/99"
     id = db.add_album(url)
 
@@ -75,6 +84,7 @@ def test_add_get_album(db):
 
 
 def test_add_existing_album(db):
+    """Test adding an existing album URL returns the same ID."""
     url = "https://example.com/album/99"
     id_new = db.add_album(url)
     id_existing = db.add_album(url)
@@ -84,6 +94,7 @@ def test_add_existing_album(db):
 
 
 def test_remove_album(db):
+    """Test removing an existing album from the database."""
     url = "https://example.com/album/99"
     db.add_album(url)
     db.remove_album(url)
@@ -92,6 +103,7 @@ def test_remove_album(db):
 
 
 def test_remove_album_no_album(db):
+    """Test removing non-existing album does not raise an error."""
     url = "https://example.com/album/99"
     db.remove_album(url)
     assert db.get_album(url) is None
@@ -109,6 +121,7 @@ def test_remove_album_no_album(db):
 def test_add_artist_existing(
     db, initial_auto_download, update_auto_download, expected_auto_download
 ):
+    """Test preserving auto_download when adding existing artist."""
     url = "https://example.com/artist/99"
     db.add_artist(url, auto_download=initial_auto_download)
     db.add_artist(url, auto_download=update_auto_download)
@@ -119,6 +132,7 @@ def test_add_artist_existing(
 
 
 def test_add_song(db):
+    """Test adding a song URL to the database and retrieving it."""
     url1 = "https://example.com/song/1"
     url2 = "https://example.com/song/2"
 
@@ -133,12 +147,13 @@ def test_add_song(db):
 @pytest.mark.parametrize("driver", [None, "postgres"])
 @patch("sqlalchemy.create_engine")
 def test_get_engine(mock_create_engine, driver):
-    user, pw, url, port, db = "User1", "Pass1", "Url1", "Port1", "Db1"
+    """Test the _get_engine method of DatabaseConnector with different drivers."""
+    user, pw, host, port, db = "User1", "Pass1", "Url1", "Port1", "Db1"
     driver = driver if driver else "mysql+mysqlconnector"
     mock_env = {
         "DB_USER": user,
         "DB_PASSWORD": pw,
-        "DB_HOST": url,
+        "DB_HOST": host,
         "DB_PORT": port,
         "DB_DATABASE": db,
         "DB_DRIVER": driver,
@@ -152,5 +167,47 @@ def test_get_engine(mock_create_engine, driver):
 
     assert result == mock_engine_instance
 
-    expected_conn_str = f"{driver}://{user}:{pw}@{url}:{port}/{db}"
+    expected_conn_str = f"{driver}://{user}:{pw}@{host}:{port}/{db}"
     mock_create_engine.assert_called_once_with(expected_conn_str)
+
+
+@pytest.mark.parametrize(
+    "driver,user,pw,host,port,db",
+    [
+        ("postgres", None, "Pass1", "Url1", "Port1", "Db1"),
+        ("postgres", "User1", None, "Url1", "Port1", "Db1"),
+        ("postgres", "User1", "Pass1", None, "Port1", "Db1"),
+        ("postgres", "User1", "Pass1", "Url1", None, "Db1"),
+        ("postgres", "User1", "Pass1", "Url1", "Port1", None),
+        ("postgres", "", "Pass1", "Url1", "Port1", "Db1"),
+        ("postgres", "User1", "", "Url1", "Port1", "Db1"),
+        ("postgres", "User1", "Pass1", "", "Port1", "Db1"),
+        ("postgres", "User1", "Pass1", "Url1", "", "Db1"),
+        ("postgres", "User1", "Pass1", "Url1", "Port1", ""),
+    ],
+)
+@patch("sqlalchemy.create_engine")
+def test_get_engine_error(mock_create_engine, driver, user, pw, host, port, db):
+    """Test the _get_engine method of DatabaseConnector with different drivers."""
+    driver = driver if driver else "mysql+mysqlconnector"
+    mock_env = {}
+    if user is not None:
+        mock_env["DB_USER"] = user
+    if pw is not None:
+        mock_env["DB_PASSWORD"] = pw
+    if host is not None:
+        mock_env["DB_HOST"] = host
+    if port is not None:
+        mock_env["DB_PORT"] = port
+    if db is not None:
+        mock_env["DB_DATABASE"] = db
+    mock_env["DB_DRIVER"] = driver
+
+    mock_engine_instance = MagicMock()
+    mock_create_engine.return_value = mock_engine_instance
+
+    with patch.dict("os.environ", mock_env):
+        with pytest.raises(
+            RuntimeError, match="Database environment variables are not fully set."
+        ):
+            DatabaseConnector._get_engine()

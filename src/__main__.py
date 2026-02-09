@@ -1,23 +1,35 @@
 """User interface for the MusicAPi."""
 
 import logging
-import src.logging_config  # noqa: F401
-from nicegui import ui
+import uuid
 
-from src.ui.theme import apply_theme
-from src.ui.components import SettingsDrawer, HelpDialog
+from nicegui import app, ui
+from starlette.requests import Request
+from starlette.responses import Response
+
+from src.logging.event_logger import log_event
+from src.logging.log_database_connector import LogDatabaseConnector
+from src.logging_config import setup_logging, stop_logging
+from src.ui.components import HelpDialog, SettingsDrawer
 from src.ui.logic import process_submission
+from src.ui.theme import apply_theme
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("app.music_api_ui")
 logger.setLevel(logging.INFO)
+
+latest_url_value = ""
+
+THRESHOLD = 4
 
 
 class MusicApiApp:
     """Class for the MusicAPI user interface."""
 
-    def __init__(self):
+    def __init__(self, session_id: str | None = None):
         """Initialize the MusicApiApp."""
         apply_theme()
+
+        self.session_id = session_id
 
         self.settings = SettingsDrawer()
         self.help = HelpDialog()
@@ -31,6 +43,7 @@ class MusicApiApp:
             ui.button(icon="help", on_click=self.help.open).props("round flat")
             ui.button(icon="code", on_click=self.settings.toggle).props("round flat")
 
+    # noqa: D401
     def build_main_content(self):
         """Build the main content for the MusicAPI user interface."""
         with ui.column().classes(
@@ -54,22 +67,85 @@ class MusicApiApp:
                 .classes("mt-2")
             )
 
-            ui.button("Submit", on_click=self.handle_click).props(
-                "color=#CB69C1"
-            ).classes("pink-btn w-full h-[50px] font-bold text-lg mt-4")
+            # ensure submit handler logs and receives session_id
+            ui.button(
+                "Submit",
+                on_click=lambda: self.handle_click(session_id=self.session_id),
+            ).props("color=#CB69C1").classes(
+                "pink-btn w-full h-[50px] font-bold text-lg mt-4"
+            )
 
-    async def handle_click(self):
-        """Handle a download submission."""
+    @log_event("submit.click")
+    async def handle_click(self, session_id: str | None = None):
+        """Handle a download submission. session_id is passed to logging wrapper.
+
+        Args:
+            session_id: The session ID for logging context.
+
+        """
         await process_submission(
-            self.url_input, self.auto_dl.value, self.settings.audio_format.value
+            self.url_input,
+            self.auto_dl.value,
+            self.settings.audio_format.value,
+            session_id=session_id,
         )
 
 
-@ui.page("/")
-def main_page():
-    """Start user interface for the MusicAPi."""
-    MusicApiApp()
+@log_event("page.view")
+def _log_page_view(session_id: str | None, user_agent: str, created: bool):
+    """Emit a structured page.view event via the log_event wrapper.
 
+    Args:
+        session_id: The session ID for logging context.
+        user_agent: The client's user agent string.
+        created: Whether the session was newly created.
+
+    Returns:
+        A dict containing client and session information.
+
+    """
+    return {
+        "client": {"user_agent": user_agent},
+        "session": {"id": session_id, "created": created},
+    }
+
+
+@ui.page("/")
+def main_page(request: Request, response: Response) -> None:
+    """Start user interface for the MusicAPi.
+
+    Args:
+        request: The incoming HTTP request.
+        response: The HTTP response to be sent.
+
+    """
+    # create or reuse session id cookie
+    session_id = request.cookies.get("session_id")
+    created = False
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        response.set_cookie(
+            "session_id",
+            session_id,
+            httponly=True,
+            samesite="lax",
+            max_age=400 * 24 * 3600,
+        )
+        created = True
+
+    user_agent = request.headers.get("user-agent", "")
+
+    _log_page_view(
+        session_id=session_id,
+        user_agent=user_agent,
+        created=created,
+    )
+
+    MusicApiApp(session_id=session_id)
+
+
+app.on_shutdown(stop_logging)
 
 if __name__ in {"__main__", "__mp_main__"}:
-    ui.run(host="0.0.0.0", port=8080, title="MusicAPI")
+    setup_logging(LogDatabaseConnector())
+    ui.run(host="0.0.0.0", port=8080, title="MusicAPI", uvicorn_logging_level="warning")

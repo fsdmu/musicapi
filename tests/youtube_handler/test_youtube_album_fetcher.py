@@ -1,3 +1,5 @@
+"""Unit tests for the YoutubeAlbumFetcher class."""
+
 from unittest.mock import patch
 
 import pytest
@@ -39,8 +41,8 @@ def test_get_album_ids(
 
     assert result == album_urls
     mock_get_id_by_url.assert_called_once_with(artist_url)
-    mock_get_artist_details.assert_called_once_with(artist_id)
-    mock_get_albums.assert_called_once_with(artist_details)
+    mock_get_artist_details.assert_called_once_with(artist_id, session_id=None)
+    mock_get_albums.assert_called_once_with(artist_details, session_id=None)
     assert mock_get_album_url.call_count == len(album_ids)
 
 
@@ -98,7 +100,7 @@ def test_get_albums(mock_get_eps):
     result = YoutubeAlbumFetcher._get_albums(artist_details, get_eps=True)
 
     assert result == expected_album_ids
-    mock_get_eps.assert_called_once_with(artist_details)
+    mock_get_eps.assert_called_once_with(artist_details, session_id=None)
 
 
 @patch("src.youtube_handler.youtube_album_fetcher.YoutubeAlbumFetcher.get_eps")
@@ -119,7 +121,7 @@ def test_get_albums_no_eps_found(mock_get_eps):
     result = YoutubeAlbumFetcher._get_albums(artist_details, get_eps=True)
 
     assert result == expected_album_ids
-    mock_get_eps.assert_called_once_with(artist_details)
+    mock_get_eps.assert_called_once_with(artist_details, session_id=None)
 
 
 @patch("src.youtube_handler.youtube_album_fetcher.YoutubeAlbumFetcher.get_eps")

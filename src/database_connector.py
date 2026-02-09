@@ -1,10 +1,10 @@
 """Database connector for managing the database."""
 
 import os
-from typing import List, Optional, Any
+from typing import Any
 
 import sqlalchemy as sa
-from sqlalchemy import insert, Engine, select, Row
+from sqlalchemy import Engine, Row, insert, select
 from sqlalchemy.orm import DeclarativeBase
 
 
@@ -61,7 +61,7 @@ class DatabaseConnector:
             conn.execute(stmt)
             conn.commit()
 
-    def get_artist_id(self, artist_url: str) -> Optional[int]:
+    def get_artist_id(self, artist_url: str) -> int | None:
         """Get the artist ID for a given artist URL.
 
         Args:
@@ -76,7 +76,7 @@ class DatabaseConnector:
             result = conn.execute(stmt).fetchone()
             return result[0] if result else None
 
-    def add_artist(self, artist_url: str, auto_download: bool) -> Optional[Row[Any]]:
+    def add_artist(self, artist_url: str, auto_download: bool) -> Row[Any] | None:
         """Add an artist to the database if not already present.
 
         Args:
@@ -98,7 +98,7 @@ class DatabaseConnector:
             conn.commit()
             return res
 
-    def add_album(self, album_url: str) -> Optional[Row[Any]]:
+    def add_album(self, album_url: str) -> Row[Any] | None:
         """Add an album to the database if not already present.
 
         Args:
@@ -117,7 +117,7 @@ class DatabaseConnector:
             conn.commit()
             return res[0] if res else None
 
-    def add_song(self, song_url: str) -> Optional[Row[Any]]:
+    def add_song(self, song_url: str) -> Row[Any] | None:
         """Add a song to the database if not already present.
 
         Args:
@@ -156,7 +156,7 @@ class DatabaseConnector:
             conn.commit()
             return res
 
-    def get_auto_download_artists(self) -> List[str]:
+    def get_auto_download_artists(self) -> list[str]:
         """Retrieve a list of artist URLs marked for auto-download.
 
         Returns:
@@ -171,7 +171,7 @@ class DatabaseConnector:
                 artist_urls.append(artist.url)
         return artist_urls
 
-    def get_song(self, song_url) -> Optional[Row[Any]]:
+    def get_song(self, song_url) -> Row[Any] | None:
         """Get the song ID for a given song URL.
 
         Args:
@@ -199,7 +199,7 @@ class DatabaseConnector:
 
             return result[0] if result else None
 
-    def get_album(self, album_url) -> Optional[Row[Any]]:
+    def get_album(self, album_url) -> Row[Any] | None:
         """Get the album ID for a given album URL.
 
         Args:
@@ -214,7 +214,7 @@ class DatabaseConnector:
             result = conn.execute(stmt).fetchone()
             return result[0] if result else None
 
-    def get_artist(self, artist_url: str) -> Optional[Row[Any]]:
+    def get_artist(self, artist_url: str) -> Row[Any] | None:
         """Get the artist ID for a given artist URL.
 
         Args:
@@ -236,12 +236,20 @@ class DatabaseConnector:
         Returns:
             A SQLAlchemy Engine instance.
 
+        Raises:
+            RuntimeError: If any required environment variables are missing.
+
         """
-        user = os.environ["DB_USER"]
-        password = os.environ["DB_PASSWORD"]
-        url = os.environ["DB_HOST"]
-        port = os.environ["DB_PORT"]
-        database = os.environ["DB_DATABASE"]
+        user = os.environ.get("DB_USER")
+        password = os.environ.get("DB_PASSWORD")
+        url = os.environ.get("DB_HOST")
+        port = os.environ.get("DB_PORT")
+        database = os.environ.get("DB_DATABASE")
         driver = os.environ.get("DB_DRIVER", "mysql+mysqlconnector")
+
+        all_vars = [user, password, url, port, database, driver]
+
+        if any(v in [None, ""] for v in all_vars):
+            raise RuntimeError("Database environment variables are not fully set.")
 
         return sa.create_engine(f"{driver}://{user}:{password}@{url}:{port}/{database}")
