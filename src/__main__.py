@@ -2,6 +2,7 @@
 
 import logging
 import uuid
+from contextlib import asynccontextmanager
 
 from nicegui import app, ui
 from starlette.requests import Request
@@ -199,16 +200,24 @@ def main_page(request: Request, response: Response) -> None:
 
 
 # Ensure logging is configured on ASGI startup so UI events are handled by the DB handler
-@app.on_event("startup")
-async def _startup_logging():
+@asynccontextmanager
+async def _lifespan(app):
     try:
         setup_logging(LogDatabaseConnector())
     except Exception as e:
         # log to console so failure is visible but do not prevent app startup
         logging.getLogger("app").exception(f"Logging setup failed on startup: {e}")
+    try:
+        yield
+    finally:
+        try:
+            stop_logging()
+        except Exception as e:
+            logging.getLogger("app").exception(f"Logging stop failed on shutdown: {e}")
 
 
-app.on_shutdown(stop_logging)
+# register lifespan with the underlying ASGI router
+app.router.lifespan_context = _lifespan
 
 if __name__ in {"__main__", "__mp_main__"}:
     setup_logging(LogDatabaseConnector())

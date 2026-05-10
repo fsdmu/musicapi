@@ -1,6 +1,6 @@
 """Module to fetch album and song information from YouTube Music."""
 
-from typing import Any
+from typing import Any, Dict, List
 
 from ytmusicapi import YTMusic
 

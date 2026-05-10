@@ -257,3 +257,20 @@ def test_get_eps(mock_ytmusic):
     assert result == expected_eps
     mock_ytmusic.get_album.assert_any_call("EP_ID_1")
     mock_ytmusic.get_album.assert_any_call("EP_ID_2")
+
+
+@patch("src.youtube_handler.youtube_album_fetcher.ytmusic")
+def test_get_albums_more_than_10(mock_ytmusic):
+    """Ensure _get_albums returns all albums when the API returns >10 items."""
+    # simulate ytmusic returning 15 albums (previously code only used first page/10)
+    mock_ytmusic.get_artist_albums.return_value = [
+        {"audioPlaylistId": f"ALBUM_ID_{i}"} for i in range(15)
+    ]
+
+    # call _get_albums; rely on ytmusic path so artist_details may be empty
+    result = YoutubeAlbumFetcher._get_albums({}, get_eps=False)
+
+    assert len(result) == 15
+    assert result[0] == "ALBUM_ID_0"
+    assert result[-1] == "ALBUM_ID_14"
+
