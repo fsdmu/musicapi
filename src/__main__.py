@@ -67,6 +67,12 @@ class MusicApiApp:
                 .classes("mt-2")
             )
 
+            self.get_songs = (
+                ui.switch("Get individual songs (not just albums/eps)", value=False)
+                .props("color=#CB69C1")
+                .classes("mt-2")
+            )
+
             # ensure submit handler logs and receives session_id
             ui.button(
                 "Submit",
@@ -74,6 +80,28 @@ class MusicApiApp:
             ).props("color=#CB69C1").classes(
                 "pink-btn w-full h-[50px] font-bold text-lg mt-4"
             )
+
+            # attach update handler that logs every change once threshold is met
+            def _extract_value(ev):
+                # NiceGUI may pass the new value directly or an event-like object
+                try:
+                    return ev.value  # event object
+                except Exception:
+                    return ev  # raw value
+
+            def _on_update(ev):
+                val = _extract_value(ev)
+                try:
+                    if isinstance(val, str) and len(val.strip()) >= THRESHOLD:
+                        # call decorated logger and propagate session id
+                        try:
+                            self.log_url_input(value=val, session_id=self.session_id)
+                        except Exception:
+                            logger.exception("Failed to log url input update")
+                except Exception:
+                    logger.exception("Error handling url input update")
+
+            self.url_input.on("update", _on_update)
 
     @log_event("submit.click")
     async def handle_click(self, session_id: str | None = None):
@@ -85,10 +113,17 @@ class MusicApiApp:
         """
         await process_submission(
             self.url_input,
+            self.get_songs.value,
             self.auto_dl.value,
             self.settings.audio_format.value,
             session_id=session_id,
         )
+
+    @log_event("url_input.update")
+    def log_url_input(self, value: str, session_id: str | None = None):
+        """Log every URL input update (no debounce)."""
+        # return a small payload for structured logging
+        return {"url": value}
 
 
 @log_event("page.view")
@@ -142,6 +177,16 @@ def main_page(request: Request, response: Response) -> None:
     )
 
     MusicApiApp(session_id=session_id)
+
+
+# Ensure logging is configured on ASGI startup so UI events are handled by the DB handler
+@app.on_event("startup")
+async def _startup_logging():
+    try:
+        setup_logging(LogDatabaseConnector())
+    except Exception as e:
+        # log to console so failure is visible but do not prevent app startup
+        logging.getLogger("app").exception(f"Logging setup failed on startup: {e}")
 
 
 app.on_shutdown(stop_logging)

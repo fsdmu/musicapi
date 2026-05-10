@@ -10,6 +10,7 @@ class DownloadHandlerBase(ABC):
     def download(
         self,
         url: str,
+        get_songs: bool,
         auto_download: bool,
         *args,
         session_id: str | None = None,
@@ -21,6 +22,8 @@ class DownloadHandlerBase(ABC):
 
         Args:
             url: The URL to download from.
+            get_songs: Whether to extract individual songs and not just eps and
+                albums when downloading from an artist URL.
             auto_download: Whether to mark the content for auto-download.
             *args: Positional arguments for the download method.
             session_id: Optional session identifier to propagate to downstream calls.
