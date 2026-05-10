@@ -145,6 +145,25 @@ def _log_page_view(session_id: str | None, user_agent: str, created: bool):
     }
 
 
+@log_event("page.view")
+def _log_page_view(session_id: str | None, user_agent: str, created: bool):
+    """Emit a structured page.view event via the log_event wrapper.
+
+    Args:
+        session_id: The session ID for logging context.
+        user_agent: The client's user agent string.
+        created: Whether the session was newly created.
+
+    Returns:
+        A dict containing client and session information.
+
+    """
+    return {
+        "client": {"user_agent": user_agent},
+        "session": {"id": session_id, "created": created},
+    }
+
+
 @ui.page("/")
 def main_page(request: Request, response: Response) -> None:
     """Start user interface for the MusicAPi.
