@@ -1,6 +1,6 @@
 """Module to fetch album and song information from YouTube Music."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from ytmusicapi import YTMusic
 
@@ -13,23 +13,25 @@ class YoutubeAlbumFetcher:
     """A class to fetch album and song information from YouTube Music."""
 
     @staticmethod
-    def _collect_section_results(section: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _collect_section_results(section: dict[str, Any]) -> list[dict[str, Any]]:
         """Collect all items from a section, following continuation tokens when present.
 
         This handles several shapes returned by ytmusicapi: initial 'results' and
         various continuation token structures. For each continuation token it calls
         ytmusic.get_continuation(...) and extracts list-like results.
         """
-        items: List[Dict[str, Any]] = []
+        items: list[dict[str, Any]] = []
         if not section:
             return items
 
         # initial results
-        items.extend(section.get("results", []) if isinstance(section.get("results", []), list) else [])
+        items.extend(
+            section.get(
+                "results", []
+            ) if isinstance(section.get("results", []), list) else []
+        )
 
-        # collect explicit 'continuations' structures
         continuations = section.get("continuations", []) or []
-        # try also 'continuation' / 'nextContinuationData' single-token shapes
         if not continuations:
             cont_token = None
             for key in ("continuation", "nextContinuationData"):
@@ -44,7 +46,11 @@ class YoutubeAlbumFetcher:
                         break
 
         for cont in continuations:
-            token = cont.get("continuation") or cont.get("token") or cont.get("nextContinuationData", {}).get("continuation")
+            token = cont.get(
+                "continuation"
+            ) or cont.get("token") or cont.get(
+                "nextContinuationData", {}
+            ).get("continuation")
             if not token:
                 continue
             try:
@@ -53,15 +59,20 @@ class YoutubeAlbumFetcher:
                 break
 
             if isinstance(next_page, dict):
-                # common direct list
-                if "results" in next_page and isinstance(next_page.get("results"), list):
+                if "results" in next_page and isinstance(
+                        next_page.get("results"), list
+                ):
                     items.extend(next_page.get("results", []))
                     continue
 
                 # nested containers
-                for container_key in ("albums", "singles", "continuationContents", "contents"):
+                for container_key in (
+                        "albums", "singles", "continuationContents", "contents"
+                ):
                     container = next_page.get(container_key)
-                    if isinstance(container, dict) and isinstance(container.get("results"), list):
+                    if isinstance(container, dict) and isinstance(
+                            container.get("results"
+                                          ), list):
                         items.extend(container.get("results", []))
                         break
                     if isinstance(container, list):
@@ -80,6 +91,18 @@ class YoutubeAlbumFetcher:
     def get_album_ids(artist_url: str,
                       get_songs: bool = False,
                       session_id: str | None = None) -> list[str]:
+        """Fetch album URLs from a YouTube Music artist channel URL.
+
+        Args:
+            artist_url: The YouTube Music channel URL of the artist.
+            get_songs: Whether to include songs that are not part of an album or EP.
+            session_id: Optional session ID for logging.
+
+        Returns:
+            A list of YouTube Music playlist URLs for the artist's albums and
+                optionally EPs/s that are not part of albums, depending on get_songs.
+
+        """
         artist_id = YoutubeAlbumFetcher._get_id_by_url(artist_url)
         artist_details = YoutubeAlbumFetcher._get_artist_details(
             artist_id, session_id=session_id
@@ -94,6 +117,15 @@ class YoutubeAlbumFetcher:
 
     @staticmethod
     def _get_id_by_url(url: str) -> str:
+        """Extract the YouTube channel ID from a given YouTube Music channel URL.
+
+        Args:
+            url: The YouTube Music channel URL.
+
+        Returns:
+            The extracted YouTube channel ID.
+
+        """
         if not url or "channel/" not in url:
             raise ValueError(f"Invalid YouTube Music channel URL: {url}")
         id_side = url.split("channel/")[1]
@@ -101,6 +133,15 @@ class YoutubeAlbumFetcher:
 
     @staticmethod
     def _get_album_url(playlist_id: str) -> str:
+        """Construct a YouTube Music playlist URL from a playlist ID.
+
+        Args:
+            playlist_id: The YouTube Music playlist ID of the album/EP.
+
+        Returns:
+            The full YouTube Music URL for the album/EP playlist.
+
+        """
         if not playlist_id:
             raise ValueError("Playlist ID cannot be empty")
         return r"https://music.youtube.com/playlist?list=" + playlist_id
@@ -114,29 +155,44 @@ class YoutubeAlbumFetcher:
             get_songs: bool = False,
             session_id: str | None = None
     ) -> list[str]:
-        album_ids: List[str] = []
+        """Fetch album IDs from artist details.
 
-        # Primary attempt: request full album list from API
-        albums_list: List[Dict[str, Any]] = []
+        Args:
+            artist_details: The details dictionary of the artist, as returned
+                by ytmusic.get_artist
+            channel_id: The YouTube channel ID of the artist, used for API calls
+                and fallback scanning.
+            get_eps: Whether to include EPs/singles in the results.
+            get_songs: Whether to include individual songs that are not part of
+                albums/EPs in the results.
+            session_id: Optional session ID for logging.
+
+        Returns:
+            A list of album playlist IDs and optionally EP playlist IDs and
+                song video IDs.
+
+        """
+        album_ids: list[str] = []
+
+        albums_list: list[dict[str, Any]] = []
+        params = ytmusic.get_artist(channel_id)
         try:
-            albums_list = ytmusic.get_artist_albums(channel_id, limit=None) or []
+            albums_list = ytmusic.get_artist_albums(
+                channel_id, limit=None, params=params,
+            ) or []
         except Exception:
             albums_list = []
 
-        # If API returned very few items or none, try to collect continuations from artist_details
         if not albums_list or len(albums_list) < 50:
             album_section = artist_details.get("albums", {}) or {}
             collected = YoutubeAlbumFetcher._collect_section_results(album_section)
-            # if collected looks like album dicts, prefer collected; otherwise keep existing
             if collected:
-                # normalize collected structure into list of dicts
-                # some continuation items may already match get_artist_albums items
-                # prepend collected to ensure we include anything missing
-                # avoid duplicating by building a map by browseId/audioPlaylistId
                 seen = set()
-                merged: List[Dict[str, Any]] = []
+                merged: list[dict[str, Any]] = []
                 for a in collected + albums_list:
-                    pid = a.get("audioPlaylistId") or a.get("browseId") or a.get("playlistId")
+                    pid = a.get(
+                        "audioPlaylistId"
+                    ) or a.get("browseId") or a.get("playlistId")
                     if pid and pid not in seen:
                         seen.add(pid)
                         merged.append(a)
@@ -146,7 +202,9 @@ class YoutubeAlbumFetcher:
             raise ValueError("No album details found")
 
         for album in albums_list:
-            playlist_id = album.get("audioPlaylistId") or album.get("browseId") or album.get("playlistId")
+            playlist_id = album.get(
+                "audioPlaylistId"
+            ) or album.get("browseId") or album.get("playlistId")
             if not playlist_id:
                 continue
             album_ids.append(playlist_id)
@@ -161,9 +219,8 @@ class YoutubeAlbumFetcher:
                 )
             )
 
-        # Deduplicate while preserving order
         seen = set()
-        deduped: List[str] = []
+        deduped: list[str] = []
         for aid in album_ids:
             if aid and aid not in seen:
                 seen.add(aid)
@@ -176,19 +233,41 @@ class YoutubeAlbumFetcher:
     def _get_artist_details(
         artist_id: str, session_id: str | None = None
     ) -> dict[str, Any]:
+        """Fetch artist details from YouTube Music by artist ID.
+
+        Args:
+            artist_id: The YouTube Music artist ID (channel ID).
+            session_id: Optional session ID for logging.
+
+        Returns:
+            A dictionary containing the artist details as returned by
+                ytmusic.get_artist.
+
+        """
         return ytmusic.get_artist(artist_id)
 
     @staticmethod
     @log_event("youtube.get_album_songs")
     def get_album_songs(playlist_id: str, session_id: str | None = None) -> list[str]:
+        """Fetch song URLs from a given album/playlist ID.
+
+        Args:
+            playlist_id: The YouTube Music playlist ID of the album/EP.
+            session_id: Optional session ID for logging.
+
+        Returns:
+            A list of YouTube Music song URLs contained in the album/EP.
+
+        """
         playlist = ytmusic.get_playlist(playlist_id, limit=None)
         tracks = playlist.get("tracks", []) if playlist else []
 
-        songs: List[str] = []
+        songs: list[str] = []
         for track in tracks:
             video_id = track.get("videoId")
             if video_id:
-                song_url = f"https://music.youtube.com/watch?v={video_id}&list={playlist_id}"
+                song_url = ("https://music.youtube.com/"
+                            f"watch?v={video_id}&list={playlist_id}")
                 songs.append(song_url)
         return songs
 
@@ -200,7 +279,22 @@ class YoutubeAlbumFetcher:
             channel_id: str = "",
             session_id: str | None = None
     ) -> list[str]:
-        eps: List[str] = []
+        """Fetch EPs (and optionally songs) from artist details.
+
+        Args:
+            artist_details: The details dictionary of the artist, as returned
+                by ytmusic.get_artist
+            get_songs: Whether to include individual songs that are not part
+                of albums/EPs.
+            channel_id: The YouTube channel ID of the artist, used for fallback
+                scanning if 'singles' section is not present in artist_details.
+            session_id: Optional session ID for logging.
+
+        Returns:
+            A list of EP playlist IDs and optionally song video IDs.
+
+        """
+        eps: list[str] = []
         seen_ids = set()
 
         # Use continuation-aware collector for 'singles' section first
@@ -215,11 +309,15 @@ class YoutubeAlbumFetcher:
                 all_albums = []
             releases = [
                 a for a in all_albums
-                if (str(a.get("type", "")).lower() in ("single", "ep") or a.get("isSingle") is True)
+                if (str(a.get(
+                    "type", ""
+                )).lower() in ("single", "ep") or a.get("isSingle") is True)
             ]
 
         for item in releases:
-            playlist_id = item.get("browseId") or item.get("audioPlaylistId") or item.get("playlistId")
+            playlist_id = item.get("browseId") or item.get(
+                "audioPlaylistId"
+            ) or item.get("playlistId")
             if not playlist_id or playlist_id in seen_ids:
                 continue
 

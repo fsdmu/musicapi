@@ -273,4 +273,3 @@ def test_get_albums_more_than_10(mock_ytmusic):
     assert len(result) == 15
     assert result[0] == "ALBUM_ID_0"
     assert result[-1] == "ALBUM_ID_14"
-

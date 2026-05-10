@@ -180,25 +180,26 @@ def main_page(request: Request, response: Response) -> None:
     MusicApiApp(session_id=session_id)
 
 
-# Ensure logging is configured on ASGI startup so UI events are handled by the DB handler
-@asynccontextmanager
-async def _lifespan(app):
+@app.on_event("startup")
+async def _startup_event():
+    """Startup handler to configure logging and related resources.
+
+    We keep failures from preventing the app from starting by logging exceptions.
+    """
     try:
         setup_logging(LogDatabaseConnector())
     except Exception as e:
-        # log to console so failure is visible but do not prevent app startup
         logging.getLogger("app").exception(f"Logging setup failed on startup: {e}")
+
+
+@app.on_event("shutdown")
+async def _shutdown_event():
+    """Shutdown handler to stop logging and perform cleanup."""
     try:
-        yield
-    finally:
-        try:
-            stop_logging()
-        except Exception as e:
-            logging.getLogger("app").exception(f"Logging stop failed on shutdown: {e}")
+        stop_logging()
+    except Exception as e:
+        logging.getLogger("app").exception(f"Logging stop failed on shutdown: {e}")
 
-
-# register lifespan with the underlying ASGI router
-app.router.lifespan_context = _lifespan
 
 if __name__ in {"__main__", "__mp_main__"}:
     setup_logging(LogDatabaseConnector())

@@ -10,8 +10,8 @@ class DownloadHandlerBase(ABC):
     def download(
         self,
         url: str,
-        get_songs: bool,
-        auto_download: bool,
+        get_songs: bool = False,  # make optional default False
+        auto_download: bool = False,
         *args,
         session_id: str | None = None,
         **kwargs,

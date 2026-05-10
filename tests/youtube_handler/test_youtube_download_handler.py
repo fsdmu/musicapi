@@ -1,6 +1,6 @@
 """Unit tests for YoutubeDownloadHandler."""
 
-from unittest.mock import patch, call
+from unittest.mock import patch
 
 import pytest
 
@@ -220,13 +220,16 @@ def test_get_warning_no_warning(mock_me_tube_connector, mock_db_connector):
 
 @patch("src.youtube_handler.youtube_download_handler.DatabaseConnector")
 @patch("src.youtube_handler.youtube_download_handler.MeTubeConnector")
-@patch("src.youtube_handler.youtube_download_handler.YoutubeDownloadHandler._handle_channel_url")
+@patch(
+    "src.youtube_handler.youtube_download_handler."
+    "YoutubeDownloadHandler._handle_channel_url"
+)
 def test_download_channel_url_passes_get_songs_flag(
     mock_handle_channel_url,
     mock_me_tube_connector,
     mock_db_connector,
 ):
-    """Ensure the get_songs flag is forwarded into _handle_channel_url via download()."""
+    """Ensure the get_songs flag is forwarded into _handle_channel_url via download."""
     handler = YoutubeDownloadHandler(db_connector=mock_db_connector)
     url = "https://www.youtube.com/channel/CHANNEL_ID"
 
@@ -259,8 +262,10 @@ def test_handle_channel_url_many_albums(
     mock_db_connector,
     num_albums,
 ):
-    """When many album URLs are returned, queue_download/add_album are called for each."""
-    album_urls = [f"https://example.com/playlist?list=ALBUM_ID_{i}" for i in range(num_albums)]
+    """When many album URLs are returned, queue_download are called for each."""
+    album_urls = [
+        f"https://example.com/playlist?list=ALBUM_ID_{i}" for i in range(num_albums)
+    ]
     mock_youtube_album_fetcher.get_album_ids.return_value = album_urls
     mock_youtube_album_fetcher.get_album_songs.return_value = []
 
@@ -281,4 +286,3 @@ def test_handle_channel_url_many_albums(
 
     # album_songs were empty so add_song should not be called
     assert mock_db_connector.add_song.call_count == 0
-

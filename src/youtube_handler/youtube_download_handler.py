@@ -115,7 +115,7 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
                 get_songs=get_songs,
                 quality=quality,
                 download_format=download_format,
-                add_without_download=add_without_download,  # forwarded so caller kwarg is honored
+                add_without_download=add_without_download,
                 session_id=session_id,
             )
         elif "playlist" in url or "watch?v=" in url:
