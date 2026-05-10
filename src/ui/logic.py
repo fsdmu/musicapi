@@ -6,9 +6,23 @@ from src.url_handler import UrlHandler
 
 
 async def process_submission(
-    url_input, auto_download, audio_format, session_id: str | None = None
+        url_input,
+        get_songs,
+        auto_download,
+        audio_format,
+        session_id: str | None = None
 ):
-    """Logic for handling the URL submission."""
+    """Logic for handling the URL submission.
+
+    Args:
+        url_input: The input field containing the URL.
+        get_songs: Whether to fetch individual songs and not just eps and albums
+            when downloading from an artist URL.
+        auto_download: Whether to mark the artist for auto-download.
+        audio_format: The desired audio format for downloads.
+        session_id: The session ID for logging context.
+
+    """
     try:
         url = str(url_input.value).strip()
         if not url:
@@ -24,6 +38,7 @@ async def process_submission(
 
         handler.download(
             url=url,
+            get_songs=get_songs,
             auto_download=auto_download,
             add_without_download=False,
             download_format=audio_format,

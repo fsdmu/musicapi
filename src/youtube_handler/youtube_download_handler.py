@@ -81,6 +81,7 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
     def download(
         self,
         url: str,
+        get_songs: bool,
         auto_download: bool = False,
         download_format: str = "mp3",
         quality: str = "Best",
@@ -91,6 +92,8 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
 
         Args:
             url: The YouTube URL to download from.
+            get_songs: Whether to include songs that are not part of an album or EP
+                when downloading from a channel URL. Default is False.
             auto_download: Whether to mark an artist for auto-download.
                 This is only applicable if the URL is a channel URL. Default is False.
             download_format: The desired download_format for the download.
@@ -109,8 +112,10 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
             self._handle_channel_url(
                 url,
                 auto_download,
+                get_songs=get_songs,
                 quality=quality,
                 download_format=download_format,
+                add_without_download=add_without_download,
                 session_id=session_id,
             )
         elif "playlist" in url or "watch?v=" in url:
@@ -129,6 +134,7 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
         self,
         channel_url: str,
         auto_download: bool,
+        get_songs: bool,
         quality: str,
         download_format: str,
         add_without_download: bool = False,
@@ -139,6 +145,7 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
         Args:
             channel_url: The YouTube channel URL.
             auto_download: Whether to mark the artist for auto-download.
+            get_songs: Whether to include songs that are not part of an album or EP
             quality: The desired quality for the downloads.
             download_format: The desired download_format for the downloads.
             add_without_download: If True, will add albums to the database
@@ -148,7 +155,9 @@ class YoutubeDownloadHandler(DownloadHandlerBase):
 
         """
         album_urls = YoutubeAlbumFetcher.get_album_ids(
-            channel_url, session_id=session_id
+            channel_url,
+            get_songs=get_songs,
+            session_id=session_id
         )
         self.db_connector.add_artist(channel_url, auto_download=auto_download)
         for album_url in album_urls:
