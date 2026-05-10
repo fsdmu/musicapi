@@ -15,167 +15,107 @@ class YoutubeAlbumFetcher:
     @staticmethod
     @log_event("youtube.get_album_ids")
     def get_album_ids(artist_url: str, session_id: str | None = None) -> list[str]:
-        """Fetch album URLs for a given YouTube Music artist channel URL.
-
-        Args:
-            artist_url: The YouTube Music channel URL.
-            session_id: An optional session ID for logging correlation.
-
-        Returns:
-            A list of YouTube Music playlist URLs for the artist's albums.
-
-        """
+        """Fetch playlist URLs for ALL releases (albums, EPs, singles)."""
         artist_id = YoutubeAlbumFetcher._get_id_by_url(artist_url)
         artist_details = YoutubeAlbumFetcher._get_artist_details(
             artist_id, session_id=session_id
         )
-        album_ids = YoutubeAlbumFetcher._get_albums(
+        album_ids = YoutubeAlbumFetcher._get_all_release_ids(
             artist_details, session_id=session_id
         )
-        return [YoutubeAlbumFetcher._get_album_url(id) for id in album_ids]
+        return [YoutubeAlbumFetcher._get_album_url(aid) for aid in album_ids]
 
     @staticmethod
     def _get_id_by_url(url: str) -> str:
-        """Extract the YouTube Music artist ID from a channel URL.
-
-        Args:
-            url: The YouTube Music channel URL.
-
-        Returns:
-            The YouTube Music artist ID.
-
-        """
         if not url or "channel/" not in url:
             raise ValueError(f"Invalid YouTube Music channel URL: {url}")
-
         id_side = url.split("channel/")[1]
         return id_side.split("/")[0]
 
     @staticmethod
     def _get_album_url(playlist_id: str) -> str:
-        """Construct a YouTube Music playlist URL from a playlist ID.
-
-        Args:
-            playlist_id: The YouTube Music playlist ID.
-
-        Returns:
-            The full YouTube Music playlist URL.
-        """
         if not playlist_id:
             raise ValueError("Playlist ID cannot be empty")
         return r"https://music.youtube.com/playlist?list=" + playlist_id
 
     @staticmethod
-    @log_event("youtube._get_albums")
-    def _get_albums(
-        artist_details: dict, get_eps: bool = True, session_id: str | None = None
+    @log_event("youtube._get_all_release_ids")
+    def _get_all_release_ids(
+        artist_details: dict, session_id: str | None = None
     ) -> list[str]:
-        """Extract album IDs from artist details.
+        """Return audio playlist IDs for every release (album/EP/single).
 
-        Args:
-            artist_details: A dictionary containing artist details.
-            get_eps: Whether to include EPs in the album list.
-            session_id: An optional session ID for logging correlation.
-
-        Returns:
-            A list of album IDs.
-
-        Raises:
-            ValueError: If no album details or IDs are found.
-
+        Uses the required `params` argument and handles pagination
+        via the continuation token.
         """
-        album_ids = []
+        all_playlist_ids = []
 
-        album_dict = artist_details.get("albums", {})
-        if not album_dict:
-            raise ValueError("No album details found")
-        albums = album_dict.get("results", [])
+        for section_key in ("albums", "singles"):
+            section = artist_details.get(section_key, {})
+            if not section:
+                continue
 
-        if not albums:
-            raise ValueError("No album details found")
+            # The documentation explicitly says to use both `browseId` and `params`
+            # from the artist details section. `params` is mandatory.
+            browse_id = section.get("browseId")
+            params = section.get("params")
+            if not browse_id or not params:
+                # Fallback: if params are missing, try the limited results
+                for item in section.get("results", []):
+                    album_browse_id = item.get("browseId")
+                    if album_browse_id:
+                        details = ytmusic.get_album(album_browse_id)
+                        pid = details.get("audioPlaylistId")
+                        if pid:
+                            all_playlist_ids.append(pid)
+                continue
 
-        for album in albums:
-            id = album.get("audioPlaylistId")
-            if not id:
-                raise ValueError(f"No album id found for: {album}")
-            album_ids.append(id)
+            # Paginate correctly using the continuation token
+            while True:
+                # Correctly pass `params` (required) and `limit`
+                response = ytmusic.get_artist_albums(
+                    browse_id, params=params, limit=None
+                )
+                releases = response if isinstance(
+                    response, list
+                ) else response.get("results", [])
+                for release in releases:
+                    release_browse_id = release.get("browseId")
+                    if not release_browse_id:
+                        continue
+                    album_details = ytmusic.get_album(release_browse_id)
+                    playlist_id = album_details.get("audioPlaylistId")
+                    if playlist_id:
+                        all_playlist_ids.append(playlist_id)
 
-        if get_eps:
-            album_ids.extend(
-                YoutubeAlbumFetcher.get_eps(artist_details, session_id=session_id)
-            )
+                continuation = response.get("continuation") if isinstance(
+                    response, dict
+                ) else None
+                if not continuation:
+                    break
+                params = continuation
 
-        return album_ids
+        if not all_playlist_ids:
+            raise ValueError("No releases found for this artist.")
+        return all_playlist_ids
 
     @staticmethod
     @log_event("youtube._get_artist_details")
     def _get_artist_details(
         artist_id: str, session_id: str | None = None
     ) -> dict[str, Any]:
-        """Fetch artist details from YouTube Music by artist ID.
-
-        Args:
-            artist_id: The YouTube Music artist ID.
-            session_id: An optional session ID for logging correlation.
-
-        Returns:
-            A dictionary containing artist details.
-        """
         return ytmusic.get_artist(artist_id)
 
     @staticmethod
     @log_event("youtube.get_album_songs")
     def get_album_songs(playlist_id: str, session_id: str | None = None) -> list[str]:
-        """Fetch song URLs from a YouTube Music playlist ID.
-
-        Args:
-            playlist_id: The YouTube Music playlist ID.
-            session_id: An optional session ID for logging correlation.
-
-        Returns:
-            A list of song URLs in the playlist.
-
-        """
         playlist = ytmusic.get_playlist(playlist_id, limit=None)
         tracks = playlist.get("tracks", [])
-
         songs = []
         for track in tracks:
             video_id = track.get("videoId")
             if video_id:
-                song_url = (
-                    f"https://music.youtube.com/watch?v={video_id}&list={playlist_id}"
-                )
+                song_url = ("https://music.youtube.com/"
+                            f"watch?v={video_id}&list={playlist_id}")
                 songs.append(song_url)
         return songs
-
-    @staticmethod
-    @log_event("youtube.get_eps")
-    def get_eps(artist_details: dict, session_id: str | None = None) -> list[str | Any]:
-        """Fetch EPs for a given artist ID from YouTube Music.
-
-        Args:
-            artist_details: A dictionary containing artist details.
-            session_id: An optional session ID for logging correlation.
-
-        Returns:
-            A list of EP playlist IDs.
-
-        """
-        releases = artist_details.get("singles", {}).get("results", [])
-
-        eps = []
-
-        for item in releases:
-            playlist_id = item.get("browseId")
-            if not playlist_id:
-                continue
-            album_details = ytmusic.get_album(playlist_id)
-
-            track_count = len(album_details.get("tracks", []))
-
-            if track_count <= 1:
-                continue
-            eps.append(album_details.get("audioPlaylistId"))
-
-        return eps
